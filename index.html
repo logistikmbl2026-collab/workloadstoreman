@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storeman Workload & Performance Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- HTML2Canvas untuk fitur Download Gambar Tanpa Terpotong -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mining: { 50: '#f6f7f9', 100: '#ecedf1', 500: '#f59e0b', 700: '#1e293b', 800: '#0f172a', 900: '#000000' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Loader spinner */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #f59e0b; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-gray-800 flex h-screen overflow-hidden relative">
+
+    <div id="login-overlay" class="fixed inset-0 bg-mining-900 z-[100] flex items-center justify-center fade-in">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <i class="fa-solid fa-helmet-safety text-mining-500 text-5xl mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800">Mining Workload System</h2>
+                <p class="text-sm text-gray-500 mt-2">Masuk menggunakan NIK Anda (Sesuai Data Manpower)</p>
+            </div>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Induk Karyawan (NIK)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-id-badge text-gray-400"></i>
+                        </div>
+                        <input type="text" id="login-nik" required class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md focus:ring-mining-500 focus:border-mining-500 sm:text-sm font-bold shadow-sm" placeholder="Masukkan NIK">
+                    </div>
+                </div>
+                <button type="submit" id="btn-login" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-mining-900 bg-mining-500 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mining-500 transition-colors">
+                    <i class="fa-solid fa-right-to-bracket mr-2"></i> Masuk Sistem
+                </button>
+            </form>
+            <div id="login-error" class="mt-4 text-center text-sm text-red-600 hidden bg-red-50 p-2 rounded border border-red-100"></div>
+        </div>
+    </div>
+
+    <aside class="w-64 bg-mining-800 text-white flex flex-col transition-all duration-300 z-20">
+        <div class="h-20 flex flex-col items-center justify-center border-b border-gray-700 bg-mining-900 px-4 text-center">
+            <h1 class="text-sm font-bold tracking-wider text-mining-500 w-full truncate" id="sidebar-name">User Name</h1>
+            <p class="text-xs text-gray-400 mt-1 w-full truncate" id="sidebar-role">Jabatan</p>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4 space-y-1">
+            <a href="#" onclick="switchView('dashboard')" id="nav-dashboard" class="flex items-center px-6 py-3 text-gray-300 hover:bg-mining-700 hover:text-white transition-colors active-nav">
+                <i class="fa-solid fa-chart-pie w-6"></i><span>Dashboard</span>
+            </a>
+            <!-- Only For Storeman/Oilman -->
+            <a href="#" onclick="switchView('keyin')" id="nav-keyin" class="hidden items-center px-6 py-3 text-gray-300 hover:bg-mining-700 hover:text-white transition-colors">
+                <i class="fa-solid fa-keyboard w-6"></i><span>Key-In Workload</span>
+            </a>
+            <!-- Only For Staff (Approval) -->
+            <a href="#" onclick="switchView('approval')" id="nav-approval" class="hidden items-center px-6 py-3 text-gray-300 hover:bg-mining-700 hover:text-white transition-colors">
+                <i class="fa-solid fa-clipboard-check w-6"></i><span>Staff Approval</span>
+            </a>
+            
+            <a href="#" onclick="switchView('logs')" id="nav-logs" class="flex items-center px-6 py-3 text-gray-300 hover:bg-mining-700 hover:text-white transition-colors">
+                <i class="fa-solid fa-folder-open w-6"></i><span>Activity Logs</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-700">
+            <button onclick="logout()" class="w-full flex items-center justify-center px-4 py-2 bg-gray-700 hover:bg-red-600 text-white rounded transition-colors text-sm">
+                <i class="fa-solid fa-power-off mr-2"></i> Keluar
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10">
+            <h2 id="page-title" class="text-xl font-semibold text-gray-700">Dashboard</h2>
+            <div class="flex items-center gap-4 text-sm">
+                <button onclick="refreshData()" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded border border-blue-100 flex items-center transition-colors">
+                    <i class="fa-solid fa-rotate mr-2"></i> Refresh Data
+                </button>
+                <div class="text-gray-500 border-l pl-4 flex items-center">
+                    <i class="fa-regular fa-clock mr-2"></i><span id="current-time" class="font-medium"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Toast Container -->
+        <div id="toast-container" class="fixed top-20 right-6 z-50 flex flex-col gap-2"></div>
+
+        <div class="flex-1 overflow-y-auto p-6 relative" id="main-scroll-area">
+            
+            <!-- Global Loader Overlays -->
+            <div id="data-loader" class="absolute inset-0 bg-white/80 z-40 hidden flex-col items-center justify-center">
+                <div class="loader mb-4"></div>
+                <p class="text-gray-600 font-medium">Sinkronisasi Data ke Server...</p>
+            </div>
+
+            <div id="view-dashboard" class="view-section fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-blue-500">
+                        <p class="text-sm text-gray-500 font-medium mb-1">Total Submissions</p>
+                        <p id="stat-total" class="text-3xl font-bold text-gray-800">0</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-yellow-500">
+                        <p class="text-sm text-gray-500 font-medium mb-1">Pending Approval</p>
+                        <p id="stat-pending" class="text-3xl font-bold text-yellow-600">0</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-green-500">
+                        <p class="text-sm text-gray-500 font-medium mb-1">Approved</p>
+                        <p id="stat-approved" class="text-3xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-5 border-l-4 border-red-500">
+                        <p class="text-sm text-gray-500 font-medium mb-1">Rejected</p>
+                        <p id="stat-rejected" class="text-3xl font-bold text-red-600">0</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Chart -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4">Performance Trend (Approved Only)</h3>
+                        <div class="relative h-64 w-full">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Recent Activity -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4">Recent Submissions</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-500 uppercase bg-gray-50">
+                                    <tr><th class="px-4 py-2">Nama</th><th class="px-4 py-2">Status</th><th class="px-4 py-2 text-right">Score</th></tr>
+                                </thead>
+                                <tbody id="recent-logs-body"></tbody>
+                            </table>
+                            <div id="recent-logs-empty" class="text-center py-4 text-gray-500 hidden">Belum ada data.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-keyin" class="view-section hidden fade-in">
+                <form id="workload-form" class="space-y-6">
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="bg-mining-800 text-white px-6 py-3 border-b flex justify-between items-center">
+                            <h3 class="font-semibold"><i class="fa-solid fa-id-card mr-2"></i> Informasi Personel & Shift</h3>
+                            <span id="form-user-name" class="bg-mining-700 px-3 py-1 rounded text-sm text-mining-500 font-bold border border-mining-500">NAMA USER</span>
+                        </div>
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Shift <span class="text-red-500">*</span></label>
+                                <select id="work-shift" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-mining-500 focus:border-mining-500 px-3 py-2 border font-bold bg-blue-50">
+                                    <option value="">Pilih Shift Kerja</option>
+                                    <option value="DS">Day Shift (DS)</option>
+                                    <option value="NS">Night Shift (NS)</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Storeman/Pekerjaan <span class="text-red-500">*</span></label>
+                                <select id="role-select" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-mining-500 focus:border-mining-500 px-3 py-2 border">
+                                    <option value="">-- Pilih Kategori --</option>
+                                    <option value="issuing">1. STOREMAN ISSUING</option>
+                                    <option value="receiving">2. STOREMAN RECEIVING</option>
+                                    <option value="backlog">3. STOREMAN BACKLOG</option>
+                                    <option value="stocktake">4. STOREMAN STOCK TAKE</option>
+                                    <option value="module">5. STOREMAN MODULE</option>
+                                    <option value="oilman">6. OILMAN</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Job Activities List -->
+                    <div id="job-activities-container" class="bg-white rounded-lg shadow overflow-hidden hidden">
+                        <div class="bg-mining-800 text-white px-6 py-3 flex justify-between items-center">
+                            <h3 class="font-semibold"><i class="fa-solid fa-list-check mr-2"></i> Job Activities Progress</h3>
+                            <span class="text-xs bg-mining-500 text-mining-900 px-2 py-1 rounded font-bold">Bobot: 80%</span>
+                        </div>
+                        <div class="p-0 overflow-x-auto">
+                            <table class="w-full text-sm text-left border-collapse">
+                                <thead class="bg-gray-100 text-gray-700">
+                                    <tr>
+                                        <th class="px-2 py-3 border-b w-10 text-center">No</th>
+                                        <th class="px-4 py-3 border-b w-[40%]">Deskripsi Job</th>
+                                        <th class="px-2 py-3 border-b text-center">Plan</th>
+                                        <th class="px-2 py-3 border-b text-center">Actual (%) <span class="text-red-500">*</span></th>
+                                        <th class="px-4 py-3 border-b text-center">Bukti Foto</th>
+                                        <th class="px-4 py-3 border-b">Catatan / Remarks</th>
+                                        <th class="px-2 py-3 border-b text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="jobs-tbody" class="divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+                        <div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+                            <button type="button" onclick="addCustomJob()" class="text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded shadow-sm flex items-center">
+                                <i class="fa-solid fa-plus text-mining-500 mr-2"></i> Tambah Job
+                            </button>
+                            <div class="text-right">
+                                <span class="text-sm text-gray-500 mr-2">Rata-rata Job:</span>
+                                <span id="avg-job-score" class="text-lg font-bold text-blue-600">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Safety & Improvement -->
+                    <div id="additional-eval-container" class="bg-white rounded-lg shadow overflow-hidden hidden">
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                <h4 class="font-semibold text-blue-800 mb-2">1. Safety Individu (10%)</h4>
+                                <p class="text-xs text-gray-600 mb-4">Target: 4 Green Card/Bulan</p>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-1/2">
+                                        <label class="block text-xs text-blue-700 font-bold mb-1">Actual (Input)</label>
+                                        <input type="number" id="actual-safety" min="0" class="calc-trigger w-full border-blue-300 rounded-md px-3 py-2 border text-center font-bold" placeholder="Otomatis dari data lalu jika ada">
+                                    </div>
+                                    <div class="w-1/2 text-right">
+                                        <div class="text-xs text-gray-500 mb-1">Pencapaian</div>
+                                        <div id="score-safety" class="text-xl font-bold text-blue-600">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                                <h4 class="font-semibold text-green-800 mb-2">2. Improvement Individu (10%)</h4>
+                                <p class="text-xs text-gray-600 mb-4">Target: 1 Suggestion System/Bulan</p>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-1/2">
+                                        <label class="block text-xs text-green-700 font-bold mb-1">Actual (Input)</label>
+                                        <input type="number" id="actual-improve" min="0" class="calc-trigger w-full border-green-300 rounded-md px-3 py-2 border text-center font-bold" placeholder="Otomatis dari data lalu jika ada">
+                                    </div>
+                                    <div class="w-1/2 text-right">
+                                        <div class="text-xs text-gray-500 mb-1">Pencapaian</div>
+                                        <div id="score-improve" class="text-xl font-bold text-green-600">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit & Preview -->
+                    <div id="final-score-container" class="bg-mining-800 text-white rounded-lg shadow p-6 hidden flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold">Final Score</h3>
+                            <p class="text-sm text-gray-400">Total Pencapaian Workload</p>
+                        </div>
+                        <div class="flex flex-col md:flex-row items-center gap-4">
+                            <div id="final-score-display" class="text-4xl font-black text-mining-500 drop-shadow-md mr-4">0.00%</div>
+                            <button type="button" onclick="openKeyinPreview()" class="bg-gray-100 hover:bg-white text-mining-800 font-bold py-3 px-6 rounded-lg shadow flex items-center transition-colors">
+                                <i class="fa-solid fa-eye mr-2"></i> Preview Data
+                            </button>
+                            <button type="submit" id="btn-submit-workload" class="bg-mining-500 hover:bg-yellow-500 text-mining-900 font-bold py-3 px-8 rounded-lg shadow-lg flex items-center transition-transform hover:scale-105">
+                                <i class="fa-solid fa-paper-plane mr-2"></i> Submit Data
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div id="view-approval" class="view-section hidden fade-in">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="p-6 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-semibold text-gray-700 text-lg"><i class="fa-solid fa-list-check text-mining-500 mr-2"></i> Antrean Approval Workload</h3>
+                            <p class="text-sm text-gray-500 mt-1">Review dan berikan validasi atau catatan pada pengajuan anggota.</p>
+                        </div>
+                        <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg border border-yellow-200 font-bold">
+                            <span id="pending-count">0</span> Menunggu
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="approval-list" class="space-y-4"></div>
+                        <div id="approval-empty" class="text-center py-10 text-gray-500 hidden flex-col items-center">
+                            <i class="fa-solid fa-check-double text-5xl mb-4 text-green-300"></i>
+                            <p class="text-lg font-medium text-gray-600">Semua tugas sudah di-review!</p>
+                            <p class="text-sm">Tidak ada dokumen yang pending.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-logs" class="view-section hidden fade-in">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                        <h3 class="font-semibold text-gray-700"><i class="fa-solid fa-database mr-2"></i> Database Activity Logs</h3>
+                        <div class="relative">
+                            <input type="text" id="search-log" placeholder="Cari Nama/NIK..." class="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-mining-500">
+                            <i class="fa-solid fa-search absolute right-3 top-2 text-gray-400 text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-mining-800 text-white uppercase text-xs">
+                                <tr>
+                                    <th class="px-4 py-3">Tanggal</th>
+                                    <th class="px-4 py-3">Nama (NIK)</th>
+                                    <th class="px-4 py-3">Shift</th>
+                                    <th class="px-4 py-3">Kategori</th>
+                                    <th class="px-4 py-3 text-center">Score</th>
+                                    <th class="px-4 py-3 text-center">Status</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="main-logs-body" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                        <div id="main-logs-empty" class="text-center py-10 text-gray-500 hidden">Belum ada data.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Modal -->
+            <div id="report-modal" class="fixed inset-0 bg-black/60 z-[110] hidden flex items-center justify-center p-4">
+                <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="bg-mining-800 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
+                        <h3 class="text-lg font-bold"><i class="fa-solid fa-file-invoice mr-2"></i> Raport Personal</h3>
+                        <button onclick="closeReport()" class="text-gray-300 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    </div>
+                    <!-- Area yang akan dirender penuh tanpa terpotong -->
+                    <div class="p-8 overflow-y-auto flex-1 bg-white">
+                        <div id="printable-report" class="bg-white"></div>
+                    </div>
+                    <div class="bg-gray-100 px-6 py-4 border-t flex justify-between items-center flex-shrink-0">
+                        <button onclick="closeReport()" class="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50">Tutup</button>
+                        <div class="flex gap-2">
+                            <button type="button" id="btn-download-report" onclick="downloadReportImage()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center font-bold">
+                                <i class="fa-solid fa-download mr-2"></i> Simpan Gambar
+                            </button>
+                            <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center"><i class="fa-solid fa-print mr-2"></i> Cetak PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Modal untuk Key-In -->
+            <div id="keyin-preview-modal" class="fixed inset-0 bg-black/70 z-[120] hidden flex items-center justify-center p-4">
+                <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="bg-mining-800 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
+                        <h3 class="text-lg font-bold"><i class="fa-solid fa-image mr-2"></i> Preview & Simpan Gambar</h3>
+                        <button type="button" onclick="closeKeyinPreview()" class="text-gray-300 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    </div>
+                    <div class="p-6 overflow-y-auto flex-1 bg-gray-100 flex justify-center">
+                        <!-- Area yang akan dirender jadi gambar secara penuh tanpa terpotong -->
+                        <div id="capture-area" class="w-full max-w-xl bg-white shadow-sm">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-6 py-4 border-t flex justify-end gap-3 flex-shrink-0">
+                        <button type="button" onclick="closeKeyinPreview()" class="px-4 py-2 border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50">Tutup</button>
+                        <button type="button" id="btn-download-preview" onclick="downloadPreviewImage()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center font-bold">
+                            <i class="fa-solid fa-download mr-2"></i> Simpan Gambar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // GOOGLE SCRIPT URL BACKEND
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2Bt8-bEcOHkmLYF81FlIhkwGcxdJKlmGu1fTqJR5MxU8Vr76kxAd5IkT2HYViodxjxw/exec";
+
+        let currentUser = null; 
+        let serverData = [];    
+        let performanceChartInstance = null;
+
+        const roleData = {
+            "issuing": { name: "1. STOREMAN ISSUING", tasks: ["P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Menerima dan memvalidasi dokumen permintaan barang (Issue Slip / Material Requisition) dari user.", "Mengambil barang dari lokasi penyimpanan (bin/rak) sesuai dengan dokumen permintaan.", "Melakukan posting Good Issue (GI) atau Material Dispatch di sistem inventory (SAP) agar stok terpotong secara real-time.", "Menerima pengembalian barang (Return to Store) dari mekanik jika ada part yang berlebih atau tidak jadi dipakai, dan mengembalikannya ke sistem serta rak fisik.", "Monitoring Part bekas kembali dari User", "Monitoring Part Kritis", "Monitoring MO Outstanding Dan Resume Harian Transaksi Receiving Daily", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"] },
+            "receiving": { name: "2. STOREMAN RECEIVING", tasks: ["P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Mengarahkan truk ekspedisi/supplier ke area bongkar dan melakukan penurunan barang (manual atau dengan forklift).", "Mencocokkan fisik barang (jumlah, nomor part, deskripsi) dengan dokumen Surat Jalan (Delivery Order) dan Purchase Order (PO).", "Membuat laporan (Discrepancy Report) jika menemukan barang rusak (damage), kurang (short/loss), atau berlebih (overage).", "Melakukan input Goods Receipt (GR) di sistem agar tagihan supplier bisa diproses dan barang diakui sebagai stok.", "Menyusun barang yang sudah diterima ke lokasi rak (bin location) yang tepat dan mencatat perpindahannya.", "Monitoring Part Mutasi (Pembuatan Surat Jalan , GI-PO STO, Packing)", "Memastikan Semua Document Tervalidasi Dan tersusun Rapi", "Resume Harian Transaksi Receiving Daily", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"] },
+            "backlog": { name: "3. STOREMAN BACKLOG", tasks: ["P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Menerima daftar kebutuhan material dari Planner untuk jadwal Planned Maintenance (PM) atau Backlog / Breakdown Maintenance (BM).", "Mengumpulkan part-part yang dibutuhkan untuk satu MO tertentu dan menyimpannya di dalam keranjang/box khusus (Staging Area).", "Monitoring Kesiapan Part: Melacak status ketersediaan part per MO (misal: \"MO Unit X9252 readiness 80%, kurang 2 hose\").", "Koordinasi Kekurangan Part: Secara aktif berkoordinasi dengan Tim Purchasing terkait part kritis yang masih berstatus indent (belum datang).", "Monitoring Outstanding MO-PR ( Standart Max MO-PR = 2 hari)", "Resume Harian Transaksi Backlog Daily", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"] },
+            "stocktake": { name: "4. STOREMAN STOCK TAKE", tasks: ["P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Melakukan penghitungan fisik harian berdasarkan Aktual Vs System", "Investigasi Selisih: Jika ada variance (selisih fisik vs sistem),", "melakukan pelacakan histori transaksi (kapan terakhir barang keluar/masuk) untuk mencari akar masalah.", "Pemeliharaan Lokasi (Bin Maintenance): Merapikan barang yang salah letak (misplaced) ke lokasi yang benar.", "Perawatan Label: Mengganti barcode atau label rak yang pudar, sobek, atau hilang.", "Melakukan Audit Transaksi Daily", "Resume Harian Jumlah Stock Take Daily", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"] },
+            "module": { name: "5. STOREMAN MODULE", tasks: ["P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Melakukan penghitungan fisik harian Module Aktual yang RFU", "Membuat Raport Harian Stock Module RFU / Damaged", "Memonitoring Transaksi Serialize , Module / TIre , Open/ Close Dismantle", "Manajemen Core (Barang Bekas): Mengatur penerimaan core (modul rusak dari unit) untuk Dilakukan Repair Vendor (WO EXT) / Repair Internal CMX (WO INT)", "Manajemen Yard: Mengatur tata letak penyimpanan modul di luar ruangan (laydown yard) menggunakan alas (pallet/balok) agar tidak bersentuhan langsung dengan tanah.", "Koordinasi dengan Planner dan Comex untuk pengadaan Module Rotable For PCR SCH/BUS", "Memonitoring Transaksi PCR Planner Monthly", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"] },
+            "oilman": { name: "6. OILMAN", tasks: ["P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Inspeksi Area TPS , Melakukan Press Filter dan Pembersihan area TPS", "Membuat Laporan stock Oli, Grease , Coolant", "Melakukan Issued Transaksi Penggunaan Oil, Grease , Coolant", "Penerimaan Cairan: Menerima pengiriman oli/coolant dalam bentuk IBC Tank, drum, pails", "Pengukuran Level: Melakukan dipping atau Sounding meteran tangki setiap pagi untuk mencatat saldo awal dan akhir.", "Dispensing: Memompa/mengeluarkan oli dan bahan bakar ke Service Truck (Lube Truck) atau wadah jerigen mekanik menggunakan sistem flowmeter, dan mencatat angka keluarannya secara presisi.", "Manajemen Limbah (B3) & HSE: Memastikan area Lube Farm bersih dari tumpahan oli (spill control), serta mengelola penempatan drum kosong agar rapi dan tidak mencemari lingkungan.", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"] }
+        };
+
+        function showLoader(show) { document.getElementById('data-loader').style.display = show ? 'flex' : 'none'; }
+        function showToast(msg, type='success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-blue-500');
+            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+            toast.className = `flex items-center w-full max-w-xs p-4 text-white rounded-lg shadow-lg ${bgClass} fade-in mb-2`;
+            toast.innerHTML = `<div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 bg-white/20 rounded-lg"><i class="fa-solid ${icon}"></i></div><div class="ml-3 text-sm">${msg}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+        function getScoreColor(val) { return val >= 90 ? 'text-green-600' : (val >= 70 ? 'text-yellow-600' : 'text-red-600'); }
+        function getStatusColor(status) { 
+            if(status === 'Approved') return 'bg-green-100 text-green-800 border-green-200';
+            if(status === 'Rejected') return 'bg-red-100 text-red-800 border-red-200';
+            return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        }
+
+        setInterval(() => {
+            document.getElementById('current-time').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }, 1000);
+
+        async function fetchAppScript(payload) {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                return await response.json();
+            } catch (err) {
+                console.error("Detail Error Fetch:", err);
+                throw new Error("Gagal terhubung! Pastikan akses Deployment Web App diset ke 'Anyone'.");
+            }
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nik = document.getElementById('login-nik').value;
+            const btn = document.getElementById('btn-login');
+            const errDiv = document.getElementById('login-error');
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memeriksa...'; btn.disabled = true;
+            errDiv.classList.add('hidden');
+
+            try {
+                const res = await fetchAppScript({ action: 'login', nik: nik });
+                if (res.status === 'success') {
+                    currentUser = res.user;
+                    initApp();
+                } else {
+                    errDiv.textContent = res.message; errDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                errDiv.textContent = error.message; errDiv.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i> Masuk Sistem'; btn.disabled = false;
+            }
+        });
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('login-nik').value = '';
+            document.getElementById('login-overlay').classList.remove('hidden');
+        }
+
+        function initApp() {
+            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('sidebar-name').textContent = currentUser.nama;
+            document.getElementById('sidebar-role').textContent = currentUser.jabatan;
+            document.getElementById('form-user-name').textContent = currentUser.nama;
+            
+            const isStaff = currentUser.jabatan.toLowerCase().includes('staff') || currentUser.jabatan.toLowerCase().includes('spv') || currentUser.jabatan.toLowerCase().includes('supervisor');
+            
+            if (isStaff) {
+                document.getElementById('nav-approval').classList.remove('hidden');
+                document.getElementById('nav-keyin').classList.add('hidden');
+                document.getElementById('nav-approval').style.display = 'flex';
+            } else {
+                document.getElementById('nav-approval').classList.add('hidden');
+                document.getElementById('nav-keyin').classList.remove('hidden');
+                document.getElementById('nav-keyin').style.display = 'flex';
+            }
+
+            refreshData(true);
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('aside nav a').forEach(el => {
+                el.classList.remove('bg-mining-700', 'text-white', 'border-l-4', 'border-mining-500');
+                el.classList.add('text-gray-300');
+            });
+            const activeNav = document.getElementById(`nav-${viewId}`);
+            if(activeNav) {
+                activeNav.classList.add('bg-mining-700', 'text-white', 'border-l-4', 'border-mining-500');
+                activeNav.classList.remove('text-gray-300');
+            }
+
+            const titles = { 'dashboard': 'Dashboard Performance', 'keyin': 'Input Data Workload', 'logs': 'Activity Logs Database', 'approval': 'Validasi & Approval' };
+            document.getElementById('page-title').textContent = titles[viewId];
+
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            
+            if(viewId === 'dashboard') renderDashboard();
+            if(viewId === 'logs') renderLogs();
+            if(viewId === 'approval') renderApproval();
+            if(viewId === 'keyin') loadPreviousExtras(); 
+        }
+
+        async function refreshData(isInitial = false) {
+            showLoader(true);
+            try {
+                const res = await fetchAppScript({ action: 'getWorkloads' });
+                if(res.status === 'success') {
+                    serverData = res.data;
+                    if (isInitial) {
+                        switchView('dashboard');
+                    } else {
+                        renderDashboard(); renderLogs(); renderApproval();
+                        if (document.getElementById('view-keyin').classList.contains('hidden') === false) {
+                            loadPreviousExtras();
+                        }
+                        showToast('Data berhasil diperbarui.');
+                    }
+                }
+            } catch (e) {
+                showToast('Gagal sinkronisasi data dari server.', 'error');
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        let currentJobIndex = 0;
+        document.getElementById('role-select').addEventListener('change', function() {
+            const role = this.value;
+            const tbody = document.getElementById('jobs-tbody');
+            tbody.innerHTML = ''; currentJobIndex = 0;
+
+            if (role && roleData[role]) {
+                document.getElementById('job-activities-container').classList.remove('hidden');
+                document.getElementById('additional-eval-container').classList.remove('hidden');
+                document.getElementById('final-score-container').classList.remove('hidden');
+                
+                roleData[role].tasks.forEach(taskDesc => addJobRow(taskDesc, true));
+                
+                document.getElementById('actual-safety').value = '';
+                document.getElementById('actual-improve').value = '';
+                calculateScores();
+            } else {
+                document.getElementById('job-activities-container').classList.add('hidden');
+                document.getElementById('additional-eval-container').classList.add('hidden');
+                document.getElementById('final-score-container').classList.add('hidden');
+            }
+        });
+
+        function addJobRow(desc = '', isStd = false) {
+            currentJobIndex++;
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 job-row';
+            
+            const actionHtml = isStd ? `<span class="text-xs text-gray-400">Default</span>` : `<button type="button" onclick="this.closest('tr').remove(); calculateScores();" class="text-red-500 hover:bg-red-50 p-1 rounded"><i class="fa-solid fa-trash"></i></button>`;
+            const descHtml = isStd ? `<span class="text-gray-700 block min-w-[200px]">${desc}</span><input type="hidden" class="job-desc" value="${desc}">` : `<input type="text" class="job-desc w-full border-gray-300 rounded px-2 py-1 text-sm border focus:border-mining-500" placeholder="Job Tambahan..." required>`;
+
+            tr.innerHTML = `
+                <td class="px-2 py-3 border-b text-center text-gray-500 row-num">${currentJobIndex}</td>
+                <td class="px-4 py-3 border-b">${descHtml}</td>
+                <td class="px-2 py-3 border-b text-center text-gray-600 font-medium">100%</td>
+                <td class="px-2 py-3 border-b text-center">
+                    <div class="flex items-center justify-center"><input type="number" min="0" max="100" class="job-actual calc-trigger w-16 border-gray-300 rounded px-1 py-1 text-center font-bold" required><span class="ml-1">%</span></div>
+                </td>
+                <td class="px-4 py-3 border-b text-center">
+                    <div class="flex flex-col items-center gap-1">
+                        <label class="cursor-pointer bg-blue-50 text-blue-600 border border-blue-200 px-2 py-1 rounded text-xs flex items-center hover:bg-blue-100 transition-colors">
+                            <i class="fa-solid fa-camera mr-1"></i> Pilih/Foto
+                            <input type="file" accept="image/*" capture="environment" class="hidden photo-upload">
+                        </label>
+                        <img src="" class="photo-preview hidden w-16 h-16 object-cover rounded shadow-sm border border-gray-300">
+                        <input type="hidden" class="photo-base64" value="">
+                    </div>
+                </td>
+                <td class="px-4 py-3 border-b"><input type="text" class="job-remark w-full border-gray-200 rounded px-2 py-1 text-sm border" placeholder="Catatan..."></td>
+                <td class="px-2 py-3 border-b text-center">${actionHtml}</td>
+            `;
+
+            tr.querySelector('.photo-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(re) {
+                        const img = tr.querySelector('.photo-preview');
+                        img.src = re.target.result; img.classList.remove('hidden');
+                        tr.querySelector('.photo-base64').value = re.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            document.getElementById('jobs-tbody').appendChild(tr);
+            attachCalcListeners();
+        }
+        function addCustomJob() { addJobRow('', false); }
+
+        function attachCalcListeners() {
+            document.querySelectorAll('.calc-trigger').forEach(input => {
+                input.removeEventListener('input', calculateScores);
+                input.addEventListener('input', calculateScores);
+            });
+        }
+
+        function calculateScores() {
+            const actuals = document.querySelectorAll('.job-actual');
+            let totalActual = 0; let count = 0;
+            actuals.forEach(inp => {
+                let val = parseFloat(inp.value);
+                if(!isNaN(val)) { val = val > 100 ? 100 : (val < 0 ? 0 : val); totalActual += val; }
+                count++;
+            });
+            const avgJob = count > 0 ? (totalActual / count) : 0;
+            document.getElementById('avg-job-score').textContent = avgJob.toFixed(2) + '%';
+            document.getElementById('avg-job-score').className = `text-lg font-bold ${getScoreColor(avgJob)}`;
+
+            const sInput = parseFloat(document.getElementById('actual-safety').value) || 0;
+            let sScore = Math.min((sInput / 4) * 100, 100);
+            document.getElementById('score-safety').textContent = sScore.toFixed(1) + '%';
+            document.getElementById('score-safety').className = `text-xl font-bold ${getScoreColor(sScore)}`;
+
+            const iInput = parseFloat(document.getElementById('actual-improve').value) || 0;
+            let iScore = Math.min((iInput / 1) * 100, 100);
+            document.getElementById('score-improve').textContent = iScore.toFixed(1) + '%';
+            document.getElementById('score-improve').className = `text-xl font-bold ${getScoreColor(iScore)}`;
+
+            const finalScore = (avgJob * 0.8) + (sScore * 0.1) + (iScore * 0.1);
+            document.getElementById('final-score-display').textContent = finalScore.toFixed(2) + '%';
+            document.getElementById('final-score-display').className = `text-4xl font-black drop-shadow-md mr-4 ${getScoreColor(finalScore)}`;
+            
+            return { avgJobScore: avgJob, safetyScorePercent: sScore, improveScorePercent: iScore, finalScore };
+        }
+
+        function loadPreviousExtras() {
+            if(!serverData || serverData.length === 0 || !currentUser) return;
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            let maxSafety = 0;
+            let maxImprove = 0;
+
+            serverData.forEach(d => {
+                if(d.NIK.toString() === currentUser.nik.toString()) {
+                    const dDate = new Date(d.Timestamp);
+                    if(dDate.getMonth() === currentMonth && dDate.getFullYear() === currentYear) {
+                        const sPct = parseFloat(d['Safety (%)']) || 0;
+                        const iPct = parseFloat(d['Improvement (%)']) || 0;
+                        if(sPct > maxSafety) maxSafety = sPct;
+                        if(iPct > maxImprove) maxImprove = iPct;
+                    }
+                }
+            });
+
+            const safetyInput = Math.round((maxSafety * 4) / 100);
+            const improveInput = Math.round((maxImprove * 1) / 100);
+
+            document.getElementById('actual-safety').value = safetyInput > 0 ? safetyInput : '';
+            document.getElementById('actual-improve').value = improveInput > 0 ? improveInput : '';
+            
+            calculateScores();
+        }
+
+        function openKeyinPreview() {
+            const shift = document.getElementById('work-shift').value;
+            const roleKey = document.getElementById('role-select').value;
+            if(!shift || !roleKey) return showToast('Pilih shift dan kategori role terlebih dahulu!', 'error');
+
+            const scores = calculateScores();
+            const rows = document.querySelectorAll('.job-row');
+            let tasksHtml = '';
+            let validJob = true;
+
+            rows.forEach((row, i) => {
+                const desc = row.querySelector('.job-desc').value.trim();
+                const actual = parseFloat(row.querySelector('.job-actual').value);
+                const remark = row.querySelector('.job-remark').value.trim();
+                
+                if(!desc || isNaN(actual)) validJob = false;
+                
+                tasksHtml += `
+                    <tr class="border-b text-sm">
+                        <td class="py-2 text-center text-gray-500 border-r">${i + 1}</td>
+                        <td class="py-2 px-2 text-xs border-r">${desc}</td>
+                        <td class="py-2 text-center font-bold ${getScoreColor(actual)} border-r">${actual || 0}%</td>
+                        <td class="py-2 px-2 text-gray-500 text-xs italic">${remark || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            if(!validJob) return showToast('Harap lengkapi semua deskripsi pekerjaan dan pencapaian aktual (%).', 'error');
+
+            const roleName = roleData[roleKey].name;
+            const dateStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+
+            const captureArea = document.getElementById('capture-area');
+            captureArea.innerHTML = `
+                <div class="p-8 bg-white" style="font-family: 'Inter', sans-serif;">
+                    <div class="text-center mb-6 border-b-4 border-mining-800 pb-4">
+                        <h2 class="text-2xl font-black uppercase tracking-wider text-mining-800 m-0">DAILY WORKLOAD PREVIEW</h2>
+                        <p class="text-gray-500 text-sm mt-1">Divisi Warehouse / Logistics</p>
+                    </div>
+                    
+                    <div class="flex justify-between mb-6 text-sm bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                        <div>
+                            <p class="mb-1"><span class="text-gray-500 w-16 inline-block">Nama</span><strong class="text-gray-800">: ${currentUser.nama} (${currentUser.nik})</strong></p>
+                            <p><span class="text-gray-500 w-16 inline-block">Tanggal</span><strong class="text-gray-800">: ${dateStr}</strong></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="mb-1"><span class="text-gray-500 mr-2">Shift:</span><strong class="bg-mining-800 text-white px-2 py-1 rounded text-xs">${shift}</strong></p>
+                            <p><span class="text-gray-500 mr-2">Kategori:</span><strong class="text-mining-700">${roleName}</strong></p>
+                        </div>
+                    </div>
+
+                    <h4 class="font-bold text-gray-700 border-l-4 border-mining-500 pl-2 mb-3 text-sm">A. Aktivitas Harian</h4>
+                    <table class="w-full text-left border-collapse border border-gray-300 mb-6">
+                        <thead class="bg-mining-800 text-white text-xs">
+                            <tr>
+                                <th class="py-2 px-2 w-10 text-center border border-gray-300">No</th>
+                                <th class="py-2 px-2 border border-gray-300">Deskripsi Pekerjaan</th>
+                                <th class="py-2 px-2 text-center w-16 border border-gray-300">Actual</th>
+                                <th class="py-2 px-2 w-32 border border-gray-300">Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tasksHtml}</tbody>
+                    </table>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="border border-gray-300 rounded p-3 text-sm">
+                            <h4 class="font-bold text-gray-700 mb-2">B. Safety (10%)</h4>
+                            <div class="flex justify-between items-center bg-gray-100 p-2 rounded"><span class="text-gray-600">Pencapaian:</span> <span class="font-bold text-blue-700">${scores.safetyScorePercent.toFixed(1)}%</span></div>
+                        </div>
+                        <div class="border border-gray-300 rounded p-3 text-sm">
+                            <h4 class="font-bold text-gray-700 mb-2">C. Improvement (10%)</h4>
+                            <div class="flex justify-between items-center bg-gray-100 p-2 rounded"><span class="text-gray-600">Pencapaian:</span> <span class="font-bold text-green-700">${scores.improveScorePercent.toFixed(1)}%</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-100 border-2 border-gray-400 rounded-xl p-4 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-bold uppercase text-gray-800 m-0">TOTAL FINAL SCORE</h3>
+                        </div>
+                        <div class="px-6 py-2 bg-white rounded shadow-sm border border-gray-300">
+                            <span class="text-3xl font-black ${getScoreColor(scores.finalScore)}">${scores.finalScore.toFixed(2)}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('keyin-preview-modal').classList.remove('hidden');
+        }
+
+        function closeKeyinPreview() { document.getElementById('keyin-preview-modal').classList.add('hidden'); }
+
+        function downloadPreviewImage() {
+            const captureArea = document.getElementById('capture-area');
+            const btn = document.getElementById('btn-download-preview');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memproses...';
+            btn.disabled = true;
+
+            html2canvas(captureArea, { 
+                scale: 2, 
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                windowWidth: captureArea.scrollWidth,
+                windowHeight: captureArea.scrollHeight
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Workload_${currentUser.nik}_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(err => {
+                console.error(err);
+                showToast("Gagal menyimpan gambar.", "error");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        function downloadReportImage() {
+            const reportArea = document.getElementById('printable-report');
+            const btn = document.getElementById('btn-download-report');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Memproses...';
+            btn.disabled = true;
+
+            html2canvas(reportArea, { 
+                scale: 2, 
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                windowWidth: reportArea.scrollWidth,
+                windowHeight: reportArea.scrollHeight
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Raport_Workload_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(err => {
+                console.error(err);
+                showToast("Gagal menyimpan raport.", "error");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        document.getElementById('workload-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const shift = document.getElementById('work-shift').value;
+            const roleKey = document.getElementById('role-select').value;
+            if(!shift || !roleKey) return showToast('Pilih shift dan kategori role.', 'error');
+            
+            const scores = calculateScores();
+            const rows = document.querySelectorAll('.job-row');
+            const tasks = [];
+            let allValid = true;
+
+            showLoader(true);
+            document.querySelector('#data-loader p').textContent = "Mengunggah Foto ke Drive & Menyimpan Data...";
+
+            try {
+                for (const row of rows) {
+                    const desc = row.querySelector('.job-desc').value.trim();
+                    const actual = parseFloat(row.querySelector('.job-actual').value);
+                    const remark = row.querySelector('.job-remark').value.trim();
+                    let photo = row.querySelector('.photo-base64').value;
+
+                    if(!desc || isNaN(actual)) allValid = false;
+
+                    if (photo && photo.startsWith('data:image')) {
+                        const uploadRes = await fetchAppScript({
+                            action: 'uploadImage',
+                            fileName: `Bukti_${currentUser.nik}_${Date.now()}.jpg`,
+                            mimeType: 'image/jpeg',
+                            base64: photo
+                        });
+                        if (uploadRes.status === 'success') {
+                            photo = uploadRes.url; 
+                        }
+                    }
+
+                    tasks.push({ description: desc, actual: actual || 0, remark: remark, photo: photo });
+                }
+
+                if(!allValid) throw new Error("Mohon lengkapi semua deskripsi dan nilai job actual.");
+
+                const payload = {
+                    id: Date.now().toString(),
+                    timestamp: new Date().toISOString(),
+                    nik: currentUser.nik,
+                    nama: currentUser.nama,
+                    jabatan: currentUser.jabatan,
+                    shift: shift,
+                    roleName: roleData[roleKey].name,
+                    scores: scores,
+                    tasks: tasks
+                };
+
+                const submitRes = await fetchAppScript({ action: 'submitWorkload', payload: payload });
+                if(submitRes.status === 'success') {
+                    showToast('Data Workload berhasil disimpan ke Database Sistem!');
+                    document.getElementById('workload-form').reset();
+                    document.getElementById('jobs-tbody').innerHTML = '';
+                    document.getElementById('role-select').dispatchEvent(new Event('change'));
+                    refreshData(false);
+                    setTimeout(() => switchView('logs'), 1000);
+                } else {
+                    throw new Error(submitRes.message);
+                }
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                showLoader(false);
+            }
+        });
+
+        function renderDashboard() {
+            const isStaff = currentUser.jabatan.toLowerCase().includes('staff') || currentUser.jabatan.toLowerCase().includes('spv');
+            const dataToView = isStaff ? serverData : serverData.filter(d => d.NIK.toString() === currentUser.nik.toString());
+
+            let pending = 0, approved = 0, rejected = 0;
+            dataToView.forEach(d => {
+                if(d.Status === 'Pending') pending++;
+                if(d.Status === 'Approved') approved++;
+                if(d.Status === 'Rejected') rejected++;
+            });
+
+            document.getElementById('stat-total').textContent = dataToView.length;
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-approved').textContent = approved;
+            document.getElementById('stat-rejected').textContent = rejected;
+
+            const tbody = document.getElementById('recent-logs-body');
+            tbody.innerHTML = '';
+            if(dataToView.length === 0) {
+                document.getElementById('recent-logs-empty').classList.remove('hidden');
+            } else {
+                document.getElementById('recent-logs-empty').classList.add('hidden');
+                dataToView.slice(0, 5).forEach(d => {
+                    const finalS = parseFloat(d['Final Score (%)']) || 0;
+                    tbody.innerHTML += `
+                        <tr class="border-b"><td class="px-4 py-2 text-gray-800 font-medium">${d.Nama}</td>
+                        <td class="px-4 py-2"><span class="px-2 py-0.5 rounded text-xs border ${getStatusColor(d.Status)} font-bold">${d.Status}</span></td>
+                        <td class="px-4 py-2 text-right font-bold ${getScoreColor(finalS)}">${finalS.toFixed(1)}%</td></tr>
+                    `;
+                });
+            }
+
+            const approvedData = [...dataToView].filter(d => d.Status === 'Approved').reverse().slice(-10);
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            if (performanceChartInstance) performanceChartInstance.destroy();
+            
+            performanceChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: approvedData.map(d => {
+                        let dt = new Date(d.Timestamp); return `${dt.getDate()}/${dt.getMonth()+1} ${d.Nama.split(' ')[0]}`;
+                    }),
+                    datasets: [{
+                        label: 'Final Score (%)',
+                        data: approvedData.map(d => parseFloat(d['Final Score (%)'])),
+                        borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderWidth: 2, fill: true, tension: 0.3
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function renderApproval() {
+            const pendingList = serverData.filter(d => d.Status === 'Pending');
+            document.getElementById('pending-count').textContent = pendingList.length;
+            const container = document.getElementById('approval-list');
+            container.innerHTML = '';
+
+            if (pendingList.length === 0) {
+                document.getElementById('approval-empty').classList.remove('hidden');
+            } else {
+                document.getElementById('approval-empty').classList.add('hidden');
+                pendingList.forEach(d => {
+                    const finalS = parseFloat(d['Final Score (%)']) || 0;
+                    
+                    let taskPrevHtml = '';
+                    if(d.tasks && d.tasks.length > 0) {
+                        taskPrevHtml = `<div class="mt-3 bg-white border rounded p-3 text-xs max-h-40 overflow-y-auto"><table class="w-full">`;
+                        d.tasks.forEach((t, i) => {
+                            taskPrevHtml += `<tr class="border-b border-gray-100 last:border-0"><td class="py-1 w-6 text-gray-400">${i+1}.</td><td class="py-1 pr-2">${t.description}</td><td class="py-1 font-bold ${getScoreColor(t.actual)} text-right">${t.actual}%</td></tr>`;
+                        });
+                        taskPrevHtml += `</table></div>`;
+                    }
+
+                    const cardHtml = `
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-5 flex flex-col md:flex-row gap-4 justify-between transition-shadow hover:shadow-md" id="apprv-${d.ID}">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h4 class="font-bold text-lg text-gray-800">${d.Nama}</h4>
+                                    <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-xs font-bold">${d.NIK}</span>
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">${d.Shift}</span>
+                                </div>
+                                <p class="text-sm text-mining-700 font-semibold">${d['Kategori Role']}</p>
+                                <p class="text-xs text-gray-500 mt-1"><i class="fa-regular fa-clock"></i> ${new Date(d.Timestamp).toLocaleString('id-ID')}</p>
+                                ${taskPrevHtml}
+                                <div class="mt-4 flex gap-4 text-sm font-medium">
+                                    <div>Rata Job: <span class="text-blue-600">${parseFloat(d['Rata-rata Job (%)']).toFixed(1)}%</span></div>
+                                    <div>Safety: <span class="text-blue-600">${parseFloat(d['Safety (%)']).toFixed(1)}%</span></div>
+                                    <div>Improve: <span class="text-blue-600">${parseFloat(d['Improvement (%)']).toFixed(1)}%</span></div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end justify-center w-full md:w-64 border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-4">
+                                <div class="text-right mb-4">
+                                    <p class="text-xs text-gray-500 uppercase">Final Score</p>
+                                    <p class="text-3xl font-black ${getScoreColor(finalS)}">${finalS.toFixed(2)}%</p>
+                                </div>
+                                <textarea id="comment-${d.ID}" placeholder="Beri catatan/alasan (Opsional)" class="w-full text-sm border-gray-300 rounded border px-2 py-1.5 mb-3 focus:border-mining-500" rows="2"></textarea>
+                                <div class="flex w-full gap-2">
+                                    <button onclick="processApproval('${d.ID}', 'Rejected')" class="flex-1 bg-red-100 text-red-700 hover:bg-red-200 border border-red-200 py-1.5 rounded text-sm font-semibold transition-colors"><i class="fa-solid fa-xmark mr-1"></i> Reject</button>
+                                    <button onclick="processApproval('${d.ID}', 'Approved')" class="flex-1 bg-green-500 text-white hover:bg-green-600 py-1.5 rounded text-sm font-semibold transition-colors shadow-sm"><i class="fa-solid fa-check mr-1"></i> Approve</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += cardHtml;
+                });
+            }
+        }
+
+        async function processApproval(id, status) {
+            const comment = document.getElementById(`comment-${id}`).value || '-';
+            
+            showLoader(true);
+            try {
+                const res = await fetchAppScript({
+                    action: 'updateApproval',
+                    payload: { id: id, status: status, approverName: currentUser.nama, comment: comment }
+                });
+                
+                if(res.status === 'success') {
+                    showToast(`Workload berhasil di-${status}`);
+                    document.getElementById(`apprv-${id}`).remove();
+                    const item = serverData.find(d => d.ID.toString() === id.toString());
+                    if(item) { item.Status = status; item.Approver = currentUser.nama; item.Komentar = comment; }
+                    
+                    const newCount = parseInt(document.getElementById('pending-count').textContent) - 1;
+                    document.getElementById('pending-count').textContent = newCount;
+                    if(newCount <= 0) document.getElementById('approval-empty').classList.remove('hidden');
+                } else {
+                    showToast(res.message, 'error');
+                }
+            } catch (err) {
+                showToast('Gagal memproses approval.', 'error');
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        function renderLogs() {
+            const tbody = document.getElementById('main-logs-body');
+            const search = document.getElementById('search-log').value.toLowerCase();
+            tbody.innerHTML = '';
+            
+            const isStaff = currentUser.jabatan.toLowerCase().includes('staff') || currentUser.jabatan.toLowerCase().includes('spv');
+            const dataToView = isStaff ? serverData : serverData.filter(d => d.NIK.toString() === currentUser.nik.toString());
+            
+            const filtered = dataToView.filter(d => (d.Nama.toLowerCase().includes(search) || d.NIK.toString().includes(search)));
+
+            if(filtered.length === 0) { document.getElementById('main-logs-empty').classList.remove('hidden'); return; }
+            document.getElementById('main-logs-empty').classList.add('hidden');
+
+            filtered.forEach(d => {
+                const finalS = parseFloat(d['Final Score (%)']) || 0;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-blue-50 border-b transition-colors">
+                        <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">${new Date(d.Timestamp).toLocaleDateString('id-ID')}</td>
+                        <td class="px-4 py-3 font-semibold text-gray-800">${d.Nama} <span class="block text-xs font-normal text-gray-500">${d.NIK}</span></td>
+                        <td class="px-4 py-3"><span class="px-2 py-0.5 bg-gray-200 rounded text-xs font-bold">${d.Shift}</span></td>
+                        <td class="px-4 py-3 text-xs text-gray-600 max-w-[150px] truncate" title="${d['Kategori Role']}">${d['Kategori Role']}</td>
+                        <td class="px-4 py-3 text-center font-bold ${getScoreColor(finalS)}">${finalS.toFixed(1)}%</td>
+                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 rounded-full text-xs border font-bold ${getStatusColor(d.Status)}">${d.Status}</span></td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="openReport('${d.ID}')" class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded transition-colors text-xs shadow-sm flex items-center mx-auto">
+                                <i class="fa-solid fa-file-invoice mr-1"></i> Raport
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        document.getElementById('search-log').addEventListener('input', renderLogs);
+
+        function openReport(id) {
+            const d = serverData.find(x => x.ID.toString() === id.toString());
+            if(!d) return;
+
+            const repContainer = document.getElementById('printable-report');
+            const dateStr = new Date(d.Timestamp).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+            const finalS = parseFloat(d['Final Score (%)']);
+
+            let approvalHtml = '';
+            if (d.Status !== 'Pending') {
+                approvalHtml = `
+                <div class="mt-4 mb-4 p-4 rounded-lg border ${d.Status === 'Approved' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}">
+                    <h5 class="font-bold text-sm ${d.Status === 'Approved' ? 'text-green-800' : 'text-red-800'} mb-1"><i class="fa-solid ${d.Status === 'Approved' ? 'fa-check-circle' : 'fa-times-circle'} mr-1"></i> Status: ${d.Status.toUpperCase()}</h5>
+                    <p class="text-xs text-gray-600"><strong>Divalidasi Oleh:</strong> ${d.Approver} | <strong>Catatan:</strong> ${d.Komentar}</p>
+                </div>`;
+            }
+
+            let tasksHtml = '';
+            if(d.tasks && d.tasks.length > 0) {
+                d.tasks.forEach((t, i) => {
+                    const isLink = t.photo && (t.photo.startsWith('http') || t.photo.includes('drive.google.com'));
+                    const photoHtml = isLink 
+                        ? `<a href="${t.photo}" target="_blank" class="text-blue-500 hover:underline text-xs flex items-center justify-center flex-col"><i class="fa-brands fa-google-drive text-lg mb-1"></i> Lihat Foto</a>` 
+                        : (t.photo ? `<img src="${t.photo}" class="w-12 h-12 object-cover border">` : '<span class="text-gray-300">-</span>');
+
+                    tasksHtml += `
+                        <tr class="border-b text-sm">
+                            <td class="py-2 text-center text-gray-500">${i + 1}</td>
+                            <td class="py-2 pr-4 text-xs">${t.description}</td>
+                            <td class="py-2 text-center">100%</td>
+                            <td class="py-2 text-center font-bold ${getScoreColor(t.actual)}">${t.actual}%</td>
+                            <td class="py-2 text-center">${photoHtml}</td>
+                            <td class="py-2 text-gray-500 text-xs italic">${t.remark || '-'}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tasksHtml = `<tr><td colspan="6" class="py-4 text-center text-gray-500 text-sm italic">Detail Task tidak tersimpan (Data lama)</td></tr>`;
+            }
+
+            repContainer.innerHTML = `
+                <div class="p-8 bg-white" style="font-family: 'Inter', sans-serif;">
+                    <div class="text-center mb-6 border-b-2 border-mining-800 pb-4">
+                        <h2 class="text-2xl font-bold uppercase tracking-wider text-mining-800">RAPORT WORKLOAD STOREMAN</h2>
+                        <p class="text-gray-500 text-sm">Divisi Warehouse / Logistics</p>
+                    </div>
+                    
+                    ${approvalHtml}
+
+                    <div class="grid grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded border border-gray-200 text-sm">
+                        <div>
+                            <table class="w-full">
+                                <tr><td class="py-1 text-gray-500 w-24">Nama</td><td class="py-1 font-bold">: ${d.Nama} (${d.NIK})</td></tr>
+                                <tr><td class="py-1 text-gray-500">Jabatan</td><td class="py-1 font-bold">: ${d.Jabatan}</td></tr>
+                                <tr><td class="py-1 text-gray-500">Tanggal Input</td><td class="py-1 font-bold">: ${dateStr}</td></tr>
+                            </table>
+                        </div>
+                        <div>
+                            <table class="w-full">
+                                <tr><td class="py-1 text-gray-500 w-24">Kategori</td><td class="py-1 font-bold text-mining-700">: ${d['Kategori Role']}</td></tr>
+                                <tr><td class="py-1 text-gray-500">Shift</td><td class="py-1 font-bold">: ${d.Shift}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h4 class="font-bold text-gray-700 border-l-4 border-mining-500 pl-2 mb-2">A. Pencapaian Job Activities (Bobot: 80%)</h4>
+                        <table class="w-full text-left border-collapse border border-gray-200">
+                            <thead class="bg-mining-800 text-white text-xs">
+                                <tr><th class="py-2 px-2 w-10 text-center">No</th><th class="py-2 px-2">Aktivitas</th><th class="py-2 px-2 text-center w-16">Plan</th><th class="py-2 px-2 text-center w-16">Actual</th><th class="py-2 px-2 text-center w-24">Foto</th><th class="py-2 px-2 w-32">Catatan</th></tr>
+                            </thead>
+                            <tbody>${tasksHtml}</tbody>
+                        </table>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="border rounded p-3 text-sm">
+                            <h4 class="font-bold text-gray-700 border-l-4 border-blue-500 pl-2 mb-2">B. Safety (Bobot 10%)</h4>
+                            <div class="flex justify-between items-center bg-gray-50 p-2"><span class="text-gray-600">Pencapaian:</span> <span class="font-bold text-blue-700">${parseFloat(d['Safety (%)']).toFixed(1)}%</span></div>
+                        </div>
+                        <div class="border rounded p-3 text-sm">
+                            <h4 class="font-bold text-gray-700 border-l-4 border-green-500 pl-2 mb-2">C. Improvement (Bobot 10%)</h4>
+                            <div class="flex justify-between items-center bg-gray-50 p-2"><span class="text-gray-600">Pencapaian:</span> <span class="font-bold text-green-700">${parseFloat(d['Improvement (%)']).toFixed(1)}%</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-100 border-2 border-gray-300 rounded-xl p-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-bold uppercase text-gray-800">TOTAL FINAL SCORE</h3>
+                            <p class="text-xs text-gray-500">(Rata-Rata Job × 80%) + (Safety × 10%) + (Improvement × 10%)</p>
+                        </div>
+                        <div class="px-6 py-2 bg-white rounded shadow-inner border border-gray-200">
+                            <span class="text-3xl font-black ${getScoreColor(finalS)}">${finalS.toFixed(2)}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('report-modal').classList.remove('hidden');
+        }
+
+        function closeReport() { document.getElementById('report-modal').classList.add('hidden'); }
+
+        const printStyle = document.createElement('style');
+        printStyle.innerHTML = `@media print { body > *:not(#report-modal) { display: none !important; } #report-modal { position: static !important; display: block !important; background: transparent !important; } #report-modal > div { box-shadow: none !important; max-width: 100% !important; border: none !important; } #report-modal .bg-mining-800 button, #report-modal .bg-gray-100.border-t.flex { display: none !important; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
+        document.head.appendChild(printStyle);
+    </script>
+</body>
+</html>
