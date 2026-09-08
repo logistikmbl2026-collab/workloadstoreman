@@ -113,7 +113,7 @@
                         <div id="user-display-name" class="font-bold text-amber-400">Nama User</div>
                         <div id="user-display-role" class="text-xs text-slate-400 font-medium tracking-wide">Jabatan • NIK</div>
                     </div>
-                    <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 border border-slate-500 flex items-center justify-center text-amber-400 font-bold shadow-lg">
+                    <div onclick="openPersonalReport()" class="h-10 w-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 border border-slate-500 flex items-center justify-center text-amber-400 font-bold shadow-lg cursor-pointer hover:border-amber-400 transition" title="Klik untuk Buka Raport Personal">
                         <i class="fas fa-user-shield"></i>
                     </div>
                     <button onclick="logout()" class="ml-2 text-slate-400 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-slate-800" title="Logout">
@@ -233,7 +233,7 @@
                 </div>
 
                 <div class="glass-card rounded-xl p-6 border-t-2 border-t-emerald-500">
-                    <h2 class="text-xl font-bold mb-5 text-white border-b border-slate-700/50 pb-3 uppercase tracking-wide"><i class="fas fa-shield-alt text-emerald-400 mr-2"></i>Penilaian Ekstra (HSE & Improv)</h2>
+                    <h2 class="text-xl font-bold mb-5 text-white border-b border-slate-700/50 pb-3 uppercase tracking-wide"><i class="fas fa-shield-alt text-emerald-400 mr-2"></i>Penilaian Ekstra (HSE & Improv) (Bobot Masing-masing 10%)</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="bg-slate-800/60 p-5 rounded-xl border border-slate-700/50 shadow-inner">
                             <div class="flex justify-between items-center mb-2">
@@ -256,7 +256,7 @@
 
                 <div class="glass-card rounded-xl p-6 overflow-hidden border-t-2 border-t-blue-500">
                     <div class="flex justify-between items-center mb-5 border-b border-slate-700/50 pb-3">
-                        <h2 class="text-xl font-bold text-white uppercase tracking-wide"><i class="fas fa-tasks text-blue-400 mr-2"></i>Progress Aktivitas</h2>
+                        <h2 class="text-xl font-bold text-white uppercase tracking-wide"><i class="fas fa-tasks text-blue-400 mr-2"></i>Progress Aktivitas (Bobot Total 80%)</h2>
                         <button onclick="addCustomJob()" class="bg-blue-600/80 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-lg border border-blue-500/50">
                             <i class="fas fa-plus mr-1"></i> Job Tambahan
                         </button>
@@ -482,6 +482,71 @@
         </div>
     </div>
 
+    <div id="modal-personal-report" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl relative border border-slate-600 flex flex-col max-h-[95vh]">
+            <div class="p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900 rounded-t-2xl z-10 shrink-0">
+                <div>
+                    <h2 class="text-xl font-extrabold text-amber-500 uppercase tracking-wide"><i class="fas fa-id-card mr-2"></i> Raport Personal Storeman</h2>
+                    <p id="pr-subtitle" class="text-xs text-slate-400 mt-0.5">Ringkasan capaian kinerja dan riwayat harian</p>
+                </div>
+                <button onclick="closePersonalReport()" class="text-slate-400 hover:text-white bg-slate-700 hover:bg-red-500 rounded-full w-8 h-8 flex items-center justify-center transition shadow">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto grow space-y-6">
+                <!-- Summary Card -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700/50 shadow-inner">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Dokumen Sesi</p>
+                        <p id="pr-total-docs" class="text-3xl font-extrabold text-white">0</p>
+                    </div>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700/50 shadow-inner">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Rata-rata Score Harian</p>
+                        <p id="pr-avg-score" class="text-3xl font-extrabold text-amber-400">0%</p>
+                    </div>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700/50 shadow-inner flex flex-col justify-center items-center">
+                        <div id="pr-grade-badge" class="px-5 py-1.5 rounded-full font-extrabold text-sm uppercase shadow tracking-wider mb-1">-</div>
+                        <p id="pr-grade-desc" class="text-[11px] text-slate-300 uppercase font-bold">-</p>
+                    </div>
+                </div>
+
+                <!-- Filter Month & List -->
+                <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                    <h3 class="font-bold text-white uppercase tracking-wide text-sm"><i class="fas fa-calendar-alt text-amber-500 mr-2"></i>Riwayat Dokumen Personal</h3>
+                    <select id="pr-filter-month" class="input-dark px-3 py-1.5 text-sm font-semibold" onchange="renderPersonalReport()">
+                        <option value="all">-- Semua Bulan --</option>
+                        <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+                        <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+                        <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+                        <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                    </select>
+                </div>
+
+                <div class="overflow-x-auto rounded-lg border border-slate-700/50">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs uppercase bg-slate-900/80 text-slate-400 font-bold">
+                            <tr>
+                                <th class="px-4 py-3">Tanggal</th>
+                                <th class="px-4 py-3">Posisi</th>
+                                <th class="px-4 py-3 text-center">Score Akhir</th>
+                                <th class="px-4 py-3 text-center">Grade</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pr-tbody" class="divide-y divide-slate-700/50 bg-slate-800/40"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-slate-900 border-t border-slate-700 flex justify-end rounded-b-2xl shrink-0">
+                <button onclick="closePersonalReport()" class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2 rounded-xl font-bold transition shadow">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const WEB_APP_URL_SHEETS = "https://script.google.com/macros/s/AKfycbwCXN84KVG9F4rrDU7XLJvwTSSZo60TObq_3ECEqKTx_13hDtzuLNLwOfMefRLecNbM/exec";
         const WEB_APP_URL_DRIVE = "https://script.google.com/macros/s/AKfycbxUWMVOXxnXyEjQsHFZbxk1745-FP2ooJyfxUHjNe1xp7bk9hCqhQnmAZe_UoxGCh65/exec";
@@ -682,18 +747,19 @@
 
             const jobs = jobsByRole[role];
             jobs.forEach((jobDesc, index) => {
-                addJobRow(index, jobDesc);
+                addJobRow(index, jobDesc, false);
             });
         }
 
         function addCustomJob() {
-            const index = currentJobs.length;
+            const index = new Date().getTime();
             addJobRow(index, "", true);
         }
 
         function addJobRow(index, desc, isCustom = false) {
             const tbody = document.getElementById('jobs-tbody');
             const tr = document.createElement('tr');
+            tr.id = `job-row-${index}`;
             tr.className = "hover:bg-slate-700/30 transition-colors";
             
             const descHtml = isCustom 
@@ -710,16 +776,25 @@
                     <textarea id="job-remarks-${index}" rows="2" class="input-dark w-full px-3 py-2 text-sm resize-none" placeholder="Opsional..."></textarea>
                 </td>
                 <td class="px-4 py-4 align-top">
-                    <input type="file" accept="image/*" class="text-[10px] w-full text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" onchange="processPhoto(event, ${index})">
+                    <input type="file" accept="image/*" class="text-[10px] w-full text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" onchange="processPhoto(event, '${index}')">
                     <div id="job-photo-preview-${index}" class="mt-2 text-xs font-bold text-amber-500"></div>
                     <input type="hidden" id="job-photo-data-${index}">
                 </td>
                 <td class="px-3 py-4 align-top text-center">
-                    ${isCustom ? `<button onclick="this.closest('tr').remove()" class="text-red-400 hover:text-red-300 p-2"><i class="fas fa-trash"></i></button>` : ''}
+                    <button onclick="removeJobRow('${index}')" class="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-500/10 transition" title="Hapus Baris"><i class="fas fa-trash-alt"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
             currentJobs.push(index);
+        }
+
+        function removeJobRow(index) {
+            const row = document.getElementById(`job-row-${index}`);
+            if (row) {
+                row.remove();
+                currentJobs = currentJobs.filter(id => id !== index);
+                showToast("Baris aktivitas dihapus. Kalkulasi nilai akan menyesuaikan.", "info");
+            }
         }
 
         function processPhoto(event, index) {
@@ -798,19 +873,21 @@
             let totalActual = 0;
             let validJobCount = 0;
 
-            const rows = document.getElementById('jobs-tbody').querySelectorAll('tr');
-            rows.forEach((row) => {
+            currentJobs.forEach((index) => {
+                const row = document.getElementById(`job-row-${index}`);
+                if (!row) return;
+
                 const descInput = row.querySelector('input[id^="job-desc-"], span');
                 if(!descInput) return;
                 
                 const desc = descInput.tagName === 'SPAN' ? descInput.innerText : descInput.value;
                 if(!desc.trim()) return;
 
-                const actualInput = row.querySelector('input[id^="job-actual-"]');
+                const actualInput = row.querySelector(`input[id="job-actual-${index}"]`);
                 let actual = actualInput ? parseFloat(actualInput.value) || 0 : 0;
                 
-                const remarksInput = row.querySelector('textarea[id^="job-remarks-"]');
-                const photoInput = row.querySelector('input[id^="job-photo-data-"]');
+                const remarksInput = row.querySelector(`textarea[id="job-remarks-${index}"]`);
+                const photoInput = row.querySelector(`input[id="job-photo-data-${index}"]`);
 
                 if(photoInput && photoInput.value === 'loading') {
                     showToast("Harap tunggu, ada foto yang sedang diupload...", "error");
@@ -827,10 +904,15 @@
                 validJobCount++;
             });
 
+            if (validJobCount === 0) {
+                showToast("Daftar aktivitas tidak boleh kosong!", "error");
+                throw new Error("empty");
+            }
+
             const sfActual = parseFloat(document.getElementById('safety-actual').value) || 0;
             const imActual = parseFloat(document.getElementById('improve-actual').value) || 0;
 
-            let avgWorkloadAchv = validJobCount > 0 ? (totalActual / validJobCount) : 0;
+            let avgWorkloadAchv = (totalActual / validJobCount);
             let workloadScore = avgWorkloadAchv * 0.8; 
 
             let safetyScore = (sfActual / 4) * 10; 
@@ -857,11 +939,11 @@
         }
 
         function getGrade(score) {
-            if(score >= 105) return {grade: 'IS', color: 'bg-blue-600 text-white', desc: 'Istimewa'};
-            if(score > 100 && score < 105) return {grade: 'BS', color: 'bg-emerald-700 text-white', desc: 'Baik Sekali'};
-            if(score >= 85 && score <= 100) return {grade: 'B', color: 'bg-emerald-400 text-slate-950', desc: 'Baik'};
-            if(score >= 70 && score < 85) return {grade: 'C', color: 'bg-amber-400 text-slate-950', desc: 'Cukup'};
-            return {grade: 'K', color: 'bg-red-600 text-white', desc: 'Kurang'};
+            if (score >= 105) return { grade: 'IS', color: 'bg-blue-600 text-white', desc: 'Istimewa' };
+            if (score > 100 && score < 105) return { grade: 'BS', color: 'bg-emerald-700 text-white', desc: 'Baik Sekali' };
+            if (score >= 85 && score <= 100) return { grade: 'B', color: 'bg-emerald-400 text-slate-950', desc: 'Baik' };
+            if (score >= 70 && score < 85) return { grade: 'C', color: 'bg-amber-400 text-slate-950', desc: 'Cukup' };
+            return { grade: 'K', color: 'bg-red-600 text-white', desc: 'Kurang' };
         }
 
         function saveDraft() {
@@ -1056,10 +1138,11 @@
             
             document.getElementById('prev-total-score').innerText = data.stats.totalScore.toFixed(2) + "%";
             
+            let freshGradeInfo = getGrade(data.stats.totalScore);
             const badge = document.getElementById('prev-grade-badge');
-            badge.innerText = "GRADE " + data.stats.gradeInfo.grade;
-            badge.className = `px-8 py-2.5 rounded-full font-extrabold text-lg shadow-2xl tracking-wide uppercase ${data.stats.gradeInfo.color}`;
-            document.getElementById('prev-grade-desc').innerText = data.stats.gradeInfo.desc;
+            badge.innerText = "GRADE " + freshGradeInfo.grade;
+            badge.className = `px-8 py-2.5 rounded-full font-extrabold text-lg shadow-2xl tracking-wide uppercase ${freshGradeInfo.color}`;
+            document.getElementById('prev-grade-desc').innerText = freshGradeInfo.desc;
 
             document.getElementById('btn-submit-final').style.display = showSubmit ? 'flex' : 'none';
             document.getElementById('modal-preview').classList.remove('hidden');
@@ -1303,6 +1386,73 @@
 
             await sendToGoogleSheets(data);
             await syncDataFromServer();
+        }
+
+        // --- PERSONAL REPORT FEATURE ---
+        function openPersonalReport() {
+            if(!currentUser) return;
+            document.getElementById('pr-subtitle').innerText = `Raport Kinerja • ${currentUser.name} (${currentUser.role})`;
+            document.getElementById('pr-filter-month').value = "all";
+            renderPersonalReport();
+            document.getElementById('modal-personal-report').classList.remove('hidden');
+        }
+
+        function closePersonalReport() {
+            document.getElementById('modal-personal-report').classList.add('hidden');
+        }
+
+        function renderPersonalReport() {
+            if(!currentUser) return;
+            const mFilter = document.getElementById('pr-filter-month').value;
+            
+            // Filter logs milik user yang login dan status approved/submitted (atau semua history miliknya)
+            let userLogs = logsData.filter(log => log.name === currentUser.name);
+
+            if(mFilter !== 'all') {
+                userLogs = userLogs.filter(log => {
+                    let mw = getMonthWeek(log.date);
+                    return mw.month.toString() === mFilter;
+                });
+            }
+
+            userLogs.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            let totalDocs = userLogs.length;
+            let sumScore = 0;
+            userLogs.forEach(l => sumScore += l.stats.totalScore);
+            let avgScore = totalDocs > 0 ? (sumScore / totalDocs) : 0;
+            let avgGradeInfo = getGrade(avgScore);
+
+            document.getElementById('pr-total-docs').innerText = totalDocs;
+            document.getElementById('pr-avg-score').innerText = avgScore.toFixed(2) + "%";
+            
+            const badge = document.getElementById('pr-grade-badge');
+            badge.innerText = "GRADE " + avgGradeInfo.grade;
+            badge.className = `px-5 py-1.5 rounded-full font-extrabold text-sm uppercase shadow tracking-wider mb-1 ${avgGradeInfo.color}`;
+            document.getElementById('pr-grade-desc').innerText = avgGradeInfo.desc;
+
+            const tbody = document.getElementById('pr-tbody');
+            tbody.innerHTML = '';
+
+            if(userLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500 italic font-medium">Belum ada riwayat dokumen untuk filter bulan ini.</td></tr>';
+                return;
+            }
+
+            userLogs.forEach(log => {
+                let badgeColor = log.status === 'Draft' ? 'bg-amber-600' : log.status === 'Submitted' ? 'bg-blue-600' : log.status === 'Approved' ? 'bg-emerald-600' : 'bg-red-600';
+                let statusLabel = log.status === 'Submitted' ? 'Pending' : log.status;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-700/50 transition-colors">
+                        <td class="px-4 py-3 font-bold text-white">${log.date} <span class="text-xs text-slate-400 font-normal">(${log.shift})</span></td>
+                        <td class="px-4 py-3 text-slate-300">${log.roleText}</td>
+                        <td class="px-4 py-3 text-center font-extrabold text-amber-400">${log.stats.totalScore.toFixed(2)}%</td>
+                        <td class="px-4 py-3 text-center"><span class="${log.stats.gradeInfo.color} px-2.5 py-1 rounded text-xs font-bold uppercase">${log.stats.gradeInfo.grade}</span></td>
+                        <td class="px-4 py-3 text-center"><span class="${badgeColor} text-white px-2.5 py-0.5 rounded text-[11px] font-bold uppercase">${statusLabel}</span></td>
+                    </tr>
+                `;
+            });
         }
     </script>
 </body>
