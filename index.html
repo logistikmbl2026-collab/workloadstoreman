@@ -3,569 +3,349 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mining Storeman Workload Dashboard</title>
-    <!-- Tailwind CSS -->
+    <title>WORKLOAD LOGISTIK BSS SITE MBL</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- HTML2Canvas -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        mining: {
-                            50: '#f8fafc',
-                            100: '#f1f5f9',
-                            500: '#0f172a', // Dark slate for mining theme
-                            600: '#1e293b',
-                            700: '#334155',
-                        },
-                        accent: {
-                            500: '#f59e0b', // Amber for heavy machinery vibe
-                            600: '#d97706',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        body { background-color: #f1f5f9; }
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #f59e0b;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0f172a; 
+            background-image: linear-gradient(rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.96)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            color: #f8fafc; 
         }
+        
+        .glass-card { 
+            background: rgba(30, 41, 59, 0.75); 
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); 
+        }
+
+        .tab-active { 
+            border-bottom: 3px solid #f59e0b; 
+            color: #fbbf24 !important; 
+            background-color: rgba(245, 158, 11, 0.12); 
+        }
+
+        .input-dark { 
+            background-color: rgba(15, 23, 42, 0.8); 
+            border: 1px solid rgba(245, 158, 11, 0.3); 
+            color: white; 
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-dark:focus { 
+            border-color: #f59e0b; 
+            outline: none; 
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25); 
+        }
+
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        #toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast { padding: 1rem 1.5rem; border-radius: 0.5rem; color: white; font-weight: 600; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; border-left: 4px solid; backdrop-filter: blur(8px); }
+        .toast.success { background: rgba(16, 185, 129, 0.9); border-color: #047857; }
+        .toast.error { background: rgba(239, 68, 68, 0.9); border-color: #b91c1c; }
+        .toast.info { background: rgba(59, 130, 246, 0.9); border-color: #1d4ed8; }
+        
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
+        .loader { border: 3px solid rgba(245, 158, 11, 0.3); border-top: 3px solid #f59e0b; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .view-section { display: none; }
-        .view-section.active { display: block; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d97706; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="font-sans text-gray-800 h-screen overflow-hidden flex bg-gray-100">
+<body class="antialiased min-h-screen selection:bg-amber-500 selection:text-slate-900">
 
-    <!-- Login Modal -->
-    <div id="login-modal" class="fixed inset-0 bg-mining-700 bg-opacity-90 flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md mx-4 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-accent-500"></div>
-            <div class="text-center mb-8">
-                <i class="fa-solid fa-helmet-safety text-5xl text-accent-500 mb-3"></i>
-                <h2 class="text-2xl font-bold text-mining-600">Mining Storeman Portal</h2>
-                <p class="text-sm text-gray-500 mt-1">Sistem Input Workload & Pencapaian</p>
-            </div>
+    <div id="toast-container"></div>
+
+    <div id="login-container" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-card p-8 md:p-10 rounded-2xl w-full max-w-md border-t-4 border-t-amber-500 relative overflow-hidden">
+            <div class="absolute -top-16 -right-16 w-40 h-40 bg-amber-500 rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-pulse"></div>
             
-            <div class="mb-5">
-                <label class="block text-sm font-semibold text-gray-700 mb-2" for="nik-input">Nomor Induk Karyawan (NIK)</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-id-badge text-gray-400"></i>
-                    </div>
-                    <input type="text" id="nik-input" class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 font-medium" placeholder="Masukkan NIK Anda...">
+            <div class="text-center mb-8 relative z-10">
+                <div class="inline-block p-4 rounded-full bg-slate-800/80 shadow-lg border border-slate-700 mb-4">
+                    <i class="fas fa-boxes-packing text-4xl text-amber-500"></i>
                 </div>
+                <h1 class="text-3xl font-extrabold text-white tracking-tight mb-2 uppercase">Logistik Portal</h1>
+                <p class="text-amber-400 font-medium text-sm tracking-widest">WORKLOAD LOGISTIK BSS SITE MBL</p>
             </div>
             
-            <button id="btn-login" class="w-full bg-mining-600 hover:bg-mining-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                <span>Masuk Sistem</span>
-                <i class="fa-solid fa-arrow-right-to-bracket"></i>
-            </button>
-            <div id="login-error" class="text-red-500 text-sm text-center mt-3 hidden font-medium"></div>
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-6 relative z-10">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2 uppercase tracking-wide"><i class="fas fa-id-badge mr-2 text-amber-500"></i>Nomor Induk (NIK)</label>
+                    <input type="text" id="login-nik" required class="input-dark w-full px-4 py-3 text-lg transition text-center font-mono tracking-wider" placeholder="INPUT NIK">
+                </div>
+                <button type="submit" id="btn-login" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-900 font-extrabold py-3.5 px-4 rounded-xl shadow-lg shadow-amber-500/20 transform transition hover:-translate-y-1">
+                    <i class="fas fa-sign-in-alt mr-2"></i> MASUK SISTEM
+                </button>
+            </form>
+            <div class="mt-6 text-center text-xs text-slate-500">Secure Mining Warehouse System &copy; 2026</div>
         </div>
     </div>
 
-    <!-- Sidebar -->
-    <aside class="w-64 bg-mining-600 text-white flex flex-col h-full shadow-lg z-10 hidden sm:flex transition-all duration-300" id="sidebar">
-        <div class="p-6 flex items-center gap-3 border-b border-mining-500">
-            <div class="bg-accent-500 p-2 rounded-lg text-white">
-                <i class="fa-solid fa-boxes-stacked text-xl"></i>
-            </div>
-            <div>
-                <h1 class="text-lg font-bold leading-tight">Workload Logistik<br><span class="text-accent-500 text-sm">BSS Site MBL</span></h1>
+    <div id="app-container" class="hidden">
+        <div class="glass-card border-b border-slate-700/50 sticky top-0 z-40 backdrop-blur-xl">
+            <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-warehouse text-2xl text-amber-500 hidden md:block"></i>
+                    <div>
+                        <h1 class="text-lg md:text-xl font-extrabold text-white tracking-wide uppercase">WORKLOAD LOGISTIK <span class="text-amber-500 hidden md:inline">BSS MBL</span></h1>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right hidden md:block">
+                        <div id="user-display-name" class="font-bold text-amber-400">Nama User</div>
+                        <div id="user-display-role" class="text-xs text-slate-400 font-medium tracking-wide">Jabatan • NIK</div>
+                    </div>
+                    <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 border border-slate-500 flex items-center justify-center text-amber-400 font-bold shadow-lg">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <button onclick="logout()" class="ml-2 text-slate-400 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-slate-800" title="Logout">
+                        <i class="fas fa-power-off text-xl"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="p-4 bg-mining-700 text-sm border-b border-mining-500 flex flex-col gap-1">
-            <div class="text-gray-400 text-xs uppercase tracking-wider mb-1">User Aktif</div>
-            <div class="font-bold truncate" id="user-name-display">-</div>
-            <div class="text-accent-500 text-xs font-semibold truncate" id="user-role-display">-</div>
-            <div class="text-gray-300 text-xs truncate">NIK: <span id="user-nik-display">-</span></div>
-        </div>
-
-        <nav class="flex-1 overflow-y-auto py-4">
-            <ul class="space-y-1">
-                <li>
-                    <a href="#" onclick="switchView('dashboard')" class="nav-btn block px-6 py-3 hover:bg-mining-500 transition-colors border-l-4 border-transparent" data-target="dashboard">
-                        <i class="fa-solid fa-chart-pie w-6"></i> Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a href="#" onclick="switchView('keyin')" class="nav-btn block px-6 py-3 hover:bg-mining-500 transition-colors border-l-4 border-transparent" data-target="keyin">
-                        <i class="fa-solid fa-keyboard w-6"></i> Key-In Workload
-                    </a>
-                </li>
-                <li>
-                    <a href="#" onclick="switchView('logs')" class="nav-btn block px-6 py-3 hover:bg-mining-500 transition-colors border-l-4 border-transparent" data-target="logs">
-                        <i class="fa-solid fa-database w-6"></i> Database Logs
-                    </a>
-                </li>
-                <!-- Menu Personal Info (Baru) -->
-                <li>
-                    <a href="#" onclick="switchView('personal'); renderPersonalInfo();" class="nav-btn block px-6 py-3 hover:bg-mining-500 transition-colors border-l-4 border-transparent" data-target="personal">
-                        <i class="fa-solid fa-address-card w-6"></i> Info Kinerja Personal
-                    </a>
-                </li>
-                <!-- Menu Khusus Staff -->
-                <li id="menu-approval" class="hidden">
-                    <a href="#" onclick="switchView('approval')" class="nav-btn block px-6 py-3 hover:bg-mining-500 transition-colors border-l-4 border-transparent relative" data-target="approval">
-                        <i class="fa-solid fa-clipboard-check w-6"></i> Staff Approval
-                        <span id="badge-approval" class="absolute top-1/2 -translate-y-1/2 right-4 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-        
-        <div class="p-4 border-t border-mining-500">
-            <button onclick="handleLogout()" class="w-full py-2 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded transition-colors text-sm font-semibold flex items-center justify-center gap-2">
-                <i class="fa-solid fa-power-off"></i> Logout
-            </button>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col h-full bg-mining-50 w-full relative">
-        
-        <!-- Mobile Header -->
-        <header class="bg-white shadow-sm sm:hidden flex items-center justify-between p-4 z-20 relative">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-boxes-stacked text-accent-500 text-xl"></i>
-                <h1 class="font-bold text-mining-600">Warehouse Portal</h1>
-            </div>
-            <button onclick="document.getElementById('sidebar').classList.toggle('hidden'); document.getElementById('sidebar').classList.toggle('absolute');" class="text-mining-600 p-2">
-                <i class="fa-solid fa-bars text-xl"></i>
-            </button>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-4 sm:p-6 relative hide-scroll" id="main-scroll-area">
-            
-            <!-- Global Loader Overlay -->
-            <div id="data-loader" class="absolute inset-0 bg-white/90 z-40 hidden flex-col items-center justify-center rounded-xl">
-                <div class="loader mb-4"></div>
-                <p class="text-mining-600 font-bold" id="loader-text">Memproses data...</p>
+        <div class="max-w-7xl mx-auto p-4 space-y-6 mt-2">
+            <div class="flex overflow-x-auto glass-card rounded-xl p-1.5 mb-6 hide-scrollbar shadow-lg">
+                <button onclick="switchTab('dashboard')" class="tab-btn flex-1 py-3 px-4 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition whitespace-nowrap tab-active">
+                    <i class="fas fa-chart-line mr-2"></i>Dashboard General
+                </button>
+                <button id="nav-input" onclick="switchTab('input')" class="tab-btn flex-1 py-3 px-4 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition whitespace-nowrap">
+                    <i class="fas fa-clipboard-list mr-2"></i>Key In Workload
+                </button>
+                <button id="nav-log" onclick="switchTab('log')" class="tab-btn flex-1 py-3 px-4 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition whitespace-nowrap">
+                    <i class="fas fa-history mr-2"></i>Log Aktivitas
+                </button>
+                <button id="nav-approval" onclick="switchTab('approval')" class="hidden tab-btn flex-1 py-3 px-4 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition whitespace-nowrap border-l border-slate-700/50">
+                    <i class="fas fa-user-check mr-2 text-amber-500"></i>Approval Staff
+                </button>
             </div>
 
-            <!-- VIEW: DASHBOARD -->
-            <div id="view-dashboard" class="view-section fade-in active">
-                
-                <!-- Filter Dashboard -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap gap-4 items-end border-l-4 border-mining-500">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider"><i class="fa-regular fa-calendar mr-1"></i>Tahun</label>
-                        <select id="filter-year" onchange="renderDashboard()" class="border-gray-300 rounded border px-3 py-2 text-sm focus:border-accent-500 focus:outline-none bg-gray-50 font-semibold text-gray-700 w-32">
-                            <option value="all">Semua Tahun</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider"><i class="fa-regular fa-calendar-days mr-1"></i>Bulan</label>
-                        <select id="filter-month" onchange="renderDashboard()" class="border-gray-300 rounded border px-3 py-2 text-sm focus:border-accent-500 focus:outline-none bg-gray-50 font-semibold text-gray-700 w-36">
-                            <option value="all">Semua Bulan</option>
-                            <option value="0">Januari</option>
-                            <option value="1">Februari</option>
-                            <option value="2">Maret</option>
-                            <option value="3">April</option>
-                            <option value="4">Mei</option>
-                            <option value="5">Juni</option>
-                            <option value="6">Juli</option>
-                            <option value="7">Agustus</option>
-                            <option value="8">September</option>
-                            <option value="9">Oktober</option>
-                            <option value="10">November</option>
-                            <option value="11">Desember</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider"><i class="fa-solid fa-calendar-week mr-1"></i>Minggu</label>
-                        <select id="filter-week" onchange="renderDashboard()" class="border-gray-300 rounded border px-3 py-2 text-sm focus:border-accent-500 focus:outline-none bg-gray-50 font-semibold text-gray-700 w-44">
-                            <option value="all">Semua Minggu</option>
-                            <option value="1">Week 1 (Sen - Ming)</option>
-                            <option value="2">Week 2 (Sen - Ming)</option>
-                            <option value="3">Week 3 (Sen - Ming)</option>
-                            <option value="4">Week 4 (Sen - Ming)</option>
-                            <option value="5">Week 5 (Sen - Ming)</option>
-                        </select>
-                    </div>
-                    <div class="ml-auto">
-                        <button onclick="document.getElementById('filter-year').value=new Date().getFullYear(); document.getElementById('filter-month').value=new Date().getMonth(); document.getElementById('filter-week').value='all'; renderDashboard();" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded transition-colors flex items-center gap-2">
-                            <i class="fa-solid fa-rotate-left"></i> Reset Filter
-                        </button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 text-xl"><i class="fa-solid fa-chart-line"></i></div>
+            <div id="tab-dashboard" class="space-y-6 animate-fade-in">
+                <div class="glass-card rounded-xl p-6 border-l-4 border-l-amber-500">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
                         <div>
-                            <p class="text-xs text-gray-500 font-bold uppercase">Rata-rata Skor Total</p>
-                            <h3 class="text-2xl font-black text-gray-800" id="dash-avg-score">0%</h3>
+                            <h2 class="text-2xl font-extrabold text-white uppercase tracking-wide"><i class="fas fa-chart-pie mr-2 text-amber-500"></i> Performa Global</h2>
+                            <p class="text-slate-400 text-sm mt-1">Pantau rata-rata capaian seluruh tim operasional warehouse.</p>
                         </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-500 text-xl"><i class="fa-solid fa-hourglass-half"></i></div>
-                        <div>
-                            <p class="text-xs text-gray-500 font-bold uppercase">Menunggu Approval</p>
-                            <h3 class="text-2xl font-black text-gray-800" id="dash-pending">0</h3>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-500 text-xl"><i class="fa-solid fa-check-double"></i></div>
-                        <div>
-                            <p class="text-xs text-gray-500 font-bold uppercase">Telah Disetujui</p>
-                            <h3 class="text-2xl font-black text-gray-800" id="dash-approved">0</h3>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-500 text-xl"><i class="fa-solid fa-ban"></i></div>
-                        <div>
-                            <p class="text-xs text-gray-500 font-bold uppercase">Ditolak / Revisi</p>
-                            <h3 class="text-2xl font-black text-gray-800" id="dash-rejected">0</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                    <!-- Grafik -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 lg:col-span-2">
-                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-chart-area text-accent-500"></i> Trend Performa (Rata-rata Final Score)</h3>
-                        <div class="h-64">
-                            <canvas id="performanceChart"></canvas>
+                        <div class="flex gap-3">
+                            <select id="dash-filter-month" class="input-dark px-4 py-2 text-sm font-bold shadow-sm" onchange="renderDashboard()">
+                                <option value="all">-- Semua Bulan --</option>
+                                <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+                                <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+                                <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+                                <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                            </select>
+                            <select id="dash-filter-week" class="input-dark px-4 py-2 text-sm font-bold shadow-sm" onchange="renderDashboard()">
+                                <option value="all">-- Semua Week --</option>
+                                <option value="1">Week 1</option><option value="2">Week 2</option>
+                                <option value="3">Week 3</option><option value="4">Week 4</option><option value="5">Week 5</option>
+                            </select>
                         </div>
                     </div>
 
-                    <!-- Leaderboard -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-0 overflow-hidden flex flex-col">
-                        <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-medal text-accent-500"></i> Peringkat Kinerja</h3>
-                            <span class="text-xs font-semibold text-gray-500 bg-gray-200 px-2 py-1 rounded">Berdasarkan Filter</span>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-slate-800/80 rounded-xl p-5 border border-slate-700/50 shadow-inner flex items-center justify-between relative overflow-hidden">
+                            <div class="absolute right-0 top-0 w-16 h-16 bg-blue-500/10 rounded-bl-full"></div>
+                            <div class="z-10"><p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Submit</p><p id="dash-total-submit" class="text-4xl font-extrabold text-white">0</p></div>
+                            <i class="fas fa-clipboard-check text-4xl text-blue-500/50 z-10"></i>
                         </div>
-                        <div class="flex-1 overflow-y-auto p-4 hide-scroll" id="leaderboard-container">
-                            <!-- Leaderboard list rendered here -->
+                        <div class="bg-slate-800/80 rounded-xl p-5 border border-slate-700/50 shadow-inner flex items-center justify-between relative overflow-hidden">
+                            <div class="absolute right-0 top-0 w-16 h-16 bg-amber-500/10 rounded-bl-full"></div>
+                            <div class="z-10"><p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Rata-rata Score</p><p id="dash-avg-score" class="text-4xl font-extrabold text-white">0%</p></div>
+                            <i class="fas fa-star text-4xl text-amber-500/50 z-10"></i>
+                        </div>
+                        <div class="bg-slate-800/80 rounded-xl p-5 border border-slate-700/50 shadow-inner flex items-center justify-between relative overflow-hidden">
+                            <div class="absolute right-0 top-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full"></div>
+                            <div class="z-10"><p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Dominasi Grade</p><p id="dash-top-grade" class="text-4xl font-extrabold text-white">-</p></div>
+                            <i class="fas fa-trophy text-4xl text-emerald-500/50 z-10"></i>
                         </div>
                     </div>
-                </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                        <h3 class="font-bold text-gray-800">5 Input Workload Terakhir (Semua Storeman/Oilman)</h3>
-                        <button onclick="switchView('logs')" class="text-sm text-accent-600 hover:text-accent-700 font-semibold">Lihat Semua Data &rarr;</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
-                            <thead>
-                                <tr class="bg-gray-100/50 text-gray-600">
-                                    <th class="p-3 font-semibold border-b">Tanggal</th>
-                                    <th class="p-3 font-semibold border-b">Nama Karyawan</th>
-                                    <th class="p-3 font-semibold border-b">Role / Jabatan</th>
-                                    <th class="p-3 font-semibold border-b text-center">Score</th>
-                                    <th class="p-3 font-semibold border-b text-center">Status</th>
+                    <h3 class="text-lg font-bold text-amber-400 mb-4 border-b border-slate-700/50 pb-2 uppercase tracking-wide">Papan Peringkat (Leaderboard Seluruh Storeman)</h3>
+                    <div class="overflow-x-auto rounded-lg border border-slate-700/50">
+                        <table class="min-w-full text-sm text-left">
+                            <thead class="text-xs uppercase bg-slate-900/80 text-slate-400 border-b border-slate-700/50">
+                                <tr>
+                                    <th class="px-5 py-4 font-bold">Peringkat</th>
+                                    <th class="px-5 py-4 font-bold">Nama Storeman</th>
+                                    <th class="px-5 py-4 font-bold text-center">Total Dokumen</th>
+                                    <th class="px-5 py-4 font-bold text-center">Rata-rata Score</th>
                                 </tr>
                             </thead>
-                            <tbody id="dash-recent-table" class="divide-y divide-gray-100">
-                                <!-- Data diisi dari JS -->
-                            </tbody>
+                            <tbody id="dash-leaderboard-body" class="divide-y divide-slate-700/50 bg-slate-800/40"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- VIEW: KEY-IN WORKLOAD -->
-            <div id="view-keyin" class="view-section fade-in">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-                    <div class="flex items-center justify-between border-b pb-4 mb-4">
-                        <h2 class="text-xl font-bold text-mining-600 flex items-center gap-2"><i class="fa-solid fa-keyboard text-accent-500"></i> Form Input Workload</h2>
-                        <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase" id="form-date-display"></span>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div id="tab-input" class="hidden space-y-6">
+                <div class="glass-card rounded-xl p-6 border-t-2 border-t-amber-500">
+                    <h2 class="text-xl font-bold mb-5 text-white border-b border-slate-700/50 pb-3 uppercase tracking-wide"><i class="fas fa-file-signature text-amber-500 mr-2"></i>Parameter Sesi</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <input type="hidden" id="form-id">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih Kategori Role Storeman/Oilman <span class="text-red-500">*</span></label>
-                            <select id="role-select" onchange="generateFormTable()" class="w-full border-gray-300 rounded-lg px-4 py-2.5 focus:border-accent-500 focus:ring focus:ring-accent-500/20 bg-gray-50">
-                                <option value="">-- Pilih Kategori --</option>
-                                <option value="STOREMAN ISSUING">1. STOREMAN ISSUING</option>
-                                <option value="STOREMAN RECEIVING">2. STOREMAN RECEIVING</option>
-                                <option value="STOREMAN BACKLOG">3. STOREMAN BACKLOG</option>
-                                <option value="STOREMAN STOCK TAKE (Cycle Count & Akurasi)">4. STOREMAN STOCK TAKE (Cycle Count & Akurasi)</option>
-                                <option value="STOREMAN MODULE">5. STOREMAN MODULE</option>
-                                <option value="OILMAN">6. OILMAN</option>
+                            <label class="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Tanggal</label>
+                            <input type="date" id="date" class="input-dark w-full px-4 py-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Operator / Storeman</label>
+                            <input type="text" id="name" readonly class="input-dark w-full px-4 py-2.5 opacity-60 cursor-not-allowed bg-slate-900 border-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Shift Kerja</label>
+                            <select id="shift" class="input-dark w-full px-4 py-2.5 font-semibold">
+                                <option value="DS">Day Shift (DS)</option>
+                                <option value="NS">Night Shift (NS)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Shift Kerja <span class="text-red-500">*</span></label>
-                            <div class="flex gap-4">
-                                <label class="flex-1 cursor-pointer">
-                                    <input type="radio" name="shift" value="DS" class="peer sr-only" checked>
-                                    <div class="w-full text-center py-2.5 rounded-lg border-2 border-gray-200 peer-checked:border-accent-500 peer-checked:bg-accent-50 peer-checked:text-accent-700 font-bold transition-all text-sm">
-                                        <i class="fa-solid fa-sun mr-1"></i> Day Shift (DS)
-                                    </div>
-                                </label>
-                                <label class="flex-1 cursor-pointer">
-                                    <input type="radio" name="shift" value="NS" class="peer sr-only">
-                                    <div class="w-full text-center py-2.5 rounded-lg border-2 border-gray-200 peer-checked:border-mining-600 peer-checked:bg-mining-50 peer-checked:text-mining-700 font-bold transition-all text-sm">
-                                        <i class="fa-solid fa-moon mr-1"></i> Night Shift (NS)
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="dynamic-form-area" class="hidden">
-                        <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-4 text-sm text-blue-800">
-                            <i class="fa-solid fa-circle-info mr-2"></i><strong>Instruksi:</strong> Isikan aktual persentase pencapaian (0-100) untuk setiap job di bawah ini. Anda dapat melampirkan foto/dokumen (CCP) dengan menekan ikon kamera.
-                        </div>
-
-                        <div class="overflow-x-auto rounded-lg border border-gray-200 mb-6">
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-mining-600 text-white">
-                                    <tr>
-                                        <th class="p-3 w-10 text-center rounded-tl-lg">No</th>
-                                        <th class="p-3">Job Activities Progress</th>
-                                        <th class="p-3 w-20 text-center">Plan (%)</th>
-                                        <th class="p-3 w-28 text-center bg-mining-700">Actual (%)</th>
-                                        <th class="p-3 w-48">Catatan/Remarks (Opsional)</th>
-                                        <th class="p-3 w-32 text-center rounded-tr-lg">Foto (CCP)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="job-table-body" class="divide-y divide-gray-200 bg-white">
-                                    <!-- Rows generated by JS -->
-                                </tbody>
-                                <tfoot>
-                                    <tr class="bg-gray-50 border-t border-gray-200">
-                                        <td colspan="6" class="p-3 text-center">
-                                            <button type="button" onclick="addCustomJob()" class="text-accent-600 hover:text-accent-700 font-bold text-sm flex items-center justify-center gap-2 w-full py-1">
-                                                <i class="fa-solid fa-plus-circle"></i> Tambah Job Tambahan (Extra Job)
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr class="bg-gray-100 font-bold border-t-2 border-gray-300">
-                                        <td colspan="3" class="p-3 text-right text-gray-700">Rata-rata Job Score:</td>
-                                        <td id="avg-job-score" class="p-3 text-center text-mining-600 text-lg">0%</td>
-                                        <td colspan="2"></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-
-                        <h3 class="text-lg font-bold text-mining-600 mb-3 border-b pb-2"><i class="fa-solid fa-star text-accent-500 mr-2"></i>Penilaian Tambahan (Safety & Improvement)</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-                                <h4 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-hard-hat text-green-500 mr-2"></i>Safety Individu</h4>
-                                <p class="text-xs text-gray-500 mb-3 leading-relaxed">Safety Accountability Program (Green Card/Bulan). Plan target adalah <strong class="text-gray-700">4</strong>.</p>
-                                <div class="flex items-center gap-4">
-                                    <div class="flex-1">
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Plan</label>
-                                        <input type="number" value="4" readonly class="w-full border border-gray-200 bg-gray-100 rounded px-3 py-2 text-gray-500 font-bold text-center">
-                                    </div>
-                                    <div class="flex-1">
-                                        <label class="block text-xs font-bold text-green-600 mb-1">Actual (Total)</label>
-                                        <input type="number" id="safety-actual" min="0" oninput="calculateScores()" class="w-full border-2 border-green-400 bg-green-50 rounded px-3 py-2 text-green-800 font-black text-center focus:outline-none focus:ring-2 focus:ring-green-500">
-                                    </div>
-                                    <div class="w-20 text-right">
-                                        <label class="block text-xs font-semibold text-gray-500 mb-1">Score</label>
-                                        <span id="safety-score" class="text-xl font-bold text-gray-800 block mt-1">0%</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-                                <h4 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-lightbulb text-yellow-500 mr-2"></i>Improvement Individu</h4>
-                                <p class="text-xs text-gray-500 mb-3 leading-relaxed">Suggestion System (Improve/Bulan). Plan target adalah <strong class="text-gray-700">1</strong>.</p>
-                                <div class="flex items-center gap-4">
-                                    <div class="flex-1">
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Plan</label>
-                                        <input type="number" value="1" readonly class="w-full border border-gray-200 bg-gray-100 rounded px-3 py-2 text-gray-500 font-bold text-center">
-                                    </div>
-                                    <div class="flex-1">
-                                        <label class="block text-xs font-bold text-amber-600 mb-1">Actual (Total)</label>
-                                        <input type="number" id="improve-actual" min="0" oninput="calculateScores()" class="w-full border-2 border-amber-400 bg-amber-50 rounded px-3 py-2 text-amber-800 font-black text-center focus:outline-none focus:ring-2 focus:ring-amber-500">
-                                    </div>
-                                    <div class="w-20 text-right">
-                                        <label class="block text-xs font-semibold text-gray-500 mb-1">Score</label>
-                                        <span id="improve-score" class="text-xl font-bold text-gray-800 block mt-1">0%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-mining-700 rounded-xl p-5 text-white flex flex-col md:flex-row items-center justify-between shadow-inner mb-6 relative overflow-hidden">
-                            <div class="absolute -right-10 -top-10 opacity-10"><i class="fa-solid fa-chart-pie text-9xl"></i></div>
-                            <div>
-                                <h3 class="font-bold text-lg text-mining-100">FINAL SCORE PENCAPAIAN</h3>
-                                <p class="text-xs text-mining-300">Rata-rata Job (80%) + Safety (10%) + Improvement (10%)</p>
-                            </div>
-                            <div class="text-4xl md:text-5xl font-black text-accent-500 drop-shadow-md mt-2 md:mt-0" id="final-total-score">0%</div>
-                        </div>
-
-                        <div class="flex gap-4">
-                            <button type="button" onclick="showPreviewModal()" class="flex-1 bg-white border-2 border-mining-600 text-mining-600 hover:bg-mining-50 font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                                <i class="fa-regular fa-eye"></i> Preview & Simpan Gambar
-                            </button>
-                            <button type="button" id="btn-submit-workload" onclick="submitWorkload()" class="flex-1 bg-accent-600 hover:bg-accent-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-paper-plane"></i> Submit Data
-                            </button>
+                            <label class="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Kategori Posisi</label>
+                            <select id="role" class="input-dark w-full px-4 py-2.5 font-semibold text-amber-400" onchange="renderJobActivities()">
+                                <option value="">-- PILIH KATEGORI --</option>
+                                <option value="issuing">1. STOREMAN ISSUING</option>
+                                <option value="receiving">2. STOREMAN RECEIVING</option>
+                                <option value="backlog">3. STOREMAN BACKLOG</option>
+                                <option value="stock_take">4. STOREMAN STOCK TAKE</option>
+                                <option value="module">5. STOREMAN MODULE</option>
+                                <option value="oilman">6. OILMAN</option>
+                            </select>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- VIEW: DATABASE LOGS -->
-            <div id="view-logs" class="view-section fade-in">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col h-[calc(100vh-8rem)]">
-                    <div class="flex justify-between items-center mb-4 pb-3 border-b">
-                        <h2 class="text-xl font-bold text-mining-600 flex items-center gap-2"><i class="fa-solid fa-database text-accent-500"></i> Database & Riwayat (Global)</h2>
-                        <button onclick="renderLogs()" class="text-mining-500 hover:text-mining-700 p-2"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                <div class="glass-card rounded-xl p-6 border-t-2 border-t-emerald-500">
+                    <h2 class="text-xl font-bold mb-5 text-white border-b border-slate-700/50 pb-3 uppercase tracking-wide"><i class="fas fa-shield-alt text-emerald-400 mr-2"></i>Penilaian Ekstra (HSE & Improv)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-800/60 p-5 rounded-xl border border-slate-700/50 shadow-inner">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="font-bold text-emerald-400">SAFETY INDIVIDU</label>
+                                <span class="text-xs font-bold bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-md border border-emerald-500/30">Target: 4</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mb-4 uppercase tracking-wider">4 Green Card / Bulan (Bobot 10%)</p>
+                            <input type="number" id="safety-actual" placeholder="Masukkan angka aktual..." class="input-dark w-full px-4 py-3 font-bold text-lg">
+                        </div>
+                        <div class="bg-slate-800/60 p-5 rounded-xl border border-slate-700/50 shadow-inner">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="font-bold text-blue-400">IMPROVEMENT INDIVIDU</label>
+                                <span class="text-xs font-bold bg-blue-500/20 text-blue-300 px-2.5 py-1 rounded-md border border-blue-500/30">Target: 1</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mb-4 uppercase tracking-wider">1 Suggestion System / Bulan (Bobot 10%)</p>
+                            <input type="number" id="improve-actual" placeholder="Masukkan angka aktual..." class="input-dark w-full px-4 py-3 font-bold text-lg">
+                        </div>
                     </div>
+                </div>
 
-                    <div class="flex-1 overflow-auto rounded-lg border border-gray-200 hide-scroll">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-mining-50 text-gray-700 sticky top-0 z-10 shadow-sm">
+                <div class="glass-card rounded-xl p-6 overflow-hidden border-t-2 border-t-blue-500">
+                    <div class="flex justify-between items-center mb-5 border-b border-slate-700/50 pb-3">
+                        <h2 class="text-xl font-bold text-white uppercase tracking-wide"><i class="fas fa-tasks text-blue-400 mr-2"></i>Progress Aktivitas</h2>
+                        <button onclick="addCustomJob()" class="bg-blue-600/80 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-lg border border-blue-500/50">
+                            <i class="fas fa-plus mr-1"></i> Job Tambahan
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto pb-2 rounded-lg border border-slate-700/50">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs font-bold uppercase bg-slate-900/80 text-slate-400 border-b border-slate-700/50">
                                 <tr>
-                                    <th class="p-3 font-semibold border-b">Aksi</th>
-                                    <th class="p-3 font-semibold border-b">Tanggal Submit</th>
-                                    <th class="p-3 font-semibold border-b">Nama Lengkap</th>
-                                    <th class="p-3 font-semibold border-b">Jabatan</th>
-                                    <th class="p-3 font-semibold border-b">Kategori Role</th>
-                                    <th class="p-3 font-semibold border-b text-center">Score</th>
-                                    <th class="p-3 font-semibold border-b text-center">Status</th>
-                                    <th class="p-3 font-semibold border-b">Approver</th>
+                                    <th class="px-5 py-4 min-w-[280px]">Deskripsi Aktivitas</th>
+                                    <th class="px-3 py-4 w-24 text-center">Plan</th>
+                                    <th class="px-3 py-4 w-32 text-center text-amber-400">Aktual (%)</th>
+                                    <th class="px-4 py-4 min-w-[180px]">Remarks / Catatan</th>
+                                    <th class="px-4 py-4 min-w-[200px] text-center">Bukti Dokumentasi</th>
+                                    <th class="px-3 py-4 w-12 text-center"><i class="fas fa-cog"></i></th>
                                 </tr>
                             </thead>
-                            <tbody id="logs-table-body" class="divide-y divide-gray-100">
-                                <!-- Logs diisi dari JS -->
+                            <tbody id="jobs-tbody" class="divide-y divide-slate-700/50 bg-slate-800/40">
+                                <tr><td colspan="6" class="px-5 py-10 text-center text-slate-500 italic font-medium">Pilih Kategori Posisi di atas untuk memuat daftar tugas...</td></tr>
                             </tbody>
                         </table>
-                        <div id="logs-empty" class="hidden flex flex-col items-center justify-center py-10 text-gray-400">
-                            <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
-                            <p>Belum ada data riwayat tersedia.</p>
-                        </div>
                     </div>
+                </div>
+
+                <div class="flex flex-wrap gap-4 mt-8">
+                    <button onclick="saveDraft()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3.5 px-8 rounded-xl shadow-lg transition border border-slate-600">
+                        <i class="fas fa-save mr-2"></i> Simpan Draft
+                    </button>
+                    <button onclick="previewData()" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-900 font-extrabold py-3.5 px-8 rounded-xl shadow-lg shadow-amber-500/20 transition flex-1 text-lg">
+                        <i class="fas fa-search-plus mr-2"></i> PREVIEW & FINALISASI
+                    </button>
                 </div>
             </div>
 
-            <!-- VIEW: PERSONAL INFO (Baru) -->
-            <div id="view-personal" class="view-section fade-in">
-                <div class="bg-mining-600 rounded-xl p-6 text-white mb-6 relative overflow-hidden shadow-md">
-                    <div class="absolute right-0 top-0 opacity-10 text-[10rem] -mt-10 -mr-10"><i class="fa-solid fa-chart-pie"></i></div>
-                    <div class="relative z-10 flex items-center gap-4">
-                        <div class="w-16 h-16 bg-accent-500 rounded-full flex items-center justify-center text-3xl font-bold shadow-inner">
-                            <i class="fa-solid fa-user-tie"></i>
-                        </div>
+            <div id="tab-log" class="hidden space-y-6 animate-fade-in">
+                <div class="glass-card rounded-xl p-6 border-t-2 border-t-purple-500">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-5 border-b border-slate-700/50 pb-4">
                         <div>
-                            <h2 class="text-2xl font-bold text-white mb-1" id="pers-name">-</h2>
-                            <p class="text-mining-200 text-sm font-semibold"><span id="pers-role">-</span></p>
+                            <h2 class="text-xl font-bold text-white uppercase tracking-wide"><i class="fas fa-history text-purple-400 mr-2"></i>Riwayat & Tracking Aktivitas</h2>
+                            <p class="text-slate-400 text-xs mt-1">Pantau seluruh riwayat submission dokumen operasional.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <input type="text" id="log-search" placeholder="Cari nama/posisi..." class="input-dark px-3 py-1.5 text-sm" onkeyup="renderLog()">
+                            <select id="log-filter-status" class="input-dark px-3 py-1.5 text-sm font-semibold" onchange="renderLog()">
+                                <option value="all">-- Semua Status --</option>
+                                <option value="Draft">Draft</option>
+                                <option value="Submitted">Pending Approved</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
                         </div>
                     </div>
-                </div>
-
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm text-center">
-                        <p class="text-xs text-gray-500 font-bold uppercase mb-1">Rata-rata Final (Approved)</p>
-                        <h3 class="text-3xl font-black text-accent-500" id="pers-avg-final">0%</h3>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm text-center">
-                        <p class="text-xs text-gray-500 font-bold uppercase mb-1">Rata-rata Skor Job</p>
-                        <h3 class="text-2xl font-bold text-mining-600" id="pers-avg-job">0%</h3>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm text-center">
-                        <p class="text-xs text-gray-500 font-bold uppercase mb-1">Rata-rata Safety</p>
-                        <h3 class="text-2xl font-bold text-green-500" id="pers-avg-safety">0%</h3>
-                    </div>
-                    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm text-center">
-                        <p class="text-xs text-gray-500 font-bold uppercase mb-1">Total Input Workload</p>
-                        <h3 class="text-2xl font-bold text-gray-700"><span id="pers-total-doc">0</span> Dokumen</h3>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Chart Pribadi -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-chart-bar text-accent-500"></i> Trend Kinerja Saya</h3>
-                        <div class="h-64">
-                            <canvas id="personalChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- History Pribadi -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-80">
-                        <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-accent-500"></i> Riwayat Submisi Saya</h3>
-                        </div>
-                        <div class="flex-1 overflow-y-auto p-0 hide-scroll">
-                            <table class="w-full text-left text-sm border-collapse">
-                                <thead class="bg-gray-100 text-gray-600 sticky top-0">
-                                    <tr>
-                                        <th class="p-3 font-semibold border-b">Tanggal</th>
-                                        <th class="p-3 font-semibold border-b">Kategori Job</th>
-                                        <th class="p-3 font-semibold border-b text-center">Score</th>
-                                        <th class="p-3 font-semibold border-b text-center">Status</th>
-                                        <th class="p-3 font-semibold border-b text-center">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="pers-table-body" class="divide-y divide-gray-100">
-                                    <!-- Diisi dari JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: STAFF APPROVAL -->
-            <div id="view-approval" class="view-section fade-in">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col h-[calc(100vh-8rem)]">
-                    <div class="flex justify-between items-center mb-4 pb-3 border-b">
-                        <div>
-                            <h2 class="text-xl font-bold text-mining-600 flex items-center gap-2"><i class="fa-solid fa-clipboard-check text-accent-500"></i> Staff Approval Board</h2>
-                            <p class="text-xs text-gray-500 mt-1">Review dan verifikasi input pencapaian Storeman/Oilman.</p>
-                        </div>
-                        <button onclick="renderApproval()" class="text-mining-500 hover:text-mining-700 p-2 bg-gray-100 rounded-lg"><i class="fa-solid fa-rotate-right mr-1"></i> Segarkan Data</button>
-                    </div>
-
-                    <div class="flex-1 overflow-auto rounded-lg border border-gray-200 hide-scroll bg-gray-50/50">
-                        <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead class="bg-white text-gray-700 sticky top-0 z-10 shadow-sm border-b-2 border-gray-200">
+                    <div class="overflow-x-auto rounded-lg border border-slate-700/50">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs uppercase bg-slate-900/80 text-slate-400 font-bold">
                                 <tr>
-                                    <th class="p-4 font-bold">Informasi Karyawan</th>
-                                    <th class="p-4 font-bold">Waktu Submit</th>
-                                    <th class="p-4 font-bold">Role & Tugas</th>
-                                    <th class="p-4 font-bold text-center">Total Pencapaian</th>
-                                    <th class="p-4 font-bold text-right">Aksi Tindakan</th>
+                                    <th class="px-5 py-4">Waktu Sesi</th>
+                                    <th class="px-5 py-4">Nama Storeman</th>
+                                    <th class="px-5 py-4">Kategori Posisi</th>
+                                    <th class="px-5 py-4 text-center">Score Akhir</th>
+                                    <th class="px-5 py-4 text-center">Grade</th>
+                                    <th class="px-5 py-4 text-center">Status</th>
+                                    <th class="px-5 py-4 text-center">Aksi Lanjutan</th>
                                 </tr>
                             </thead>
-                            <tbody id="approval-table-body" class="divide-y divide-gray-200">
-                                <!-- Data Approval -->
-                            </tbody>
+                            <tbody id="log-tbody" class="divide-y divide-slate-700/50 bg-slate-800/40"></tbody>
                         </table>
-                        <div id="approval-empty" class="hidden flex flex-col items-center justify-center py-16 text-gray-400">
-                            <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-4">
-                                <i class="fa-solid fa-check text-3xl text-green-400"></i>
-                            </div>
-                            <h3 class="text-lg font-bold text-gray-700">Tidak ada antrean Approval</h3>
-                            <p class="text-sm">Semua workload telah direview. Kerja bagus!</p>
-                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-approval" class="hidden space-y-6 animate-fade-in">
+                <div class="glass-card rounded-xl p-6 border-l-4 border-l-pink-500">
+                    <h2 class="text-2xl font-extrabold mb-2 text-white uppercase tracking-wide"><i class="fas fa-user-check text-pink-500 mr-2"></i>Validasi & Approval (Khusus Staff)</h2>
+                    <p class="text-slate-400 text-sm mb-6 font-medium">Lakukan evaluasi persentase aktual dari seluruh Storeman sebelum disetujui (Approved) atau ditolak (Rejected).</p>
+                    
+                    <div class="overflow-x-auto rounded-lg border border-slate-700/50">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs uppercase bg-slate-900/80 text-slate-400 font-bold">
+                                <tr>
+                                    <th class="px-5 py-4">Waktu Submit</th>
+                                    <th class="px-5 py-4">Identitas Storeman</th>
+                                    <th class="px-5 py-4">Kategori Posisi</th>
+                                    <th class="px-5 py-4 text-center">Score Awal</th>
+                                    <th class="px-5 py-4 text-center">Status</th>
+                                    <th class="px-5 py-4 text-center">Validasi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="approval-tbody" class="divide-y divide-slate-700/50 bg-slate-800/40"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -573,1239 +353,957 @@
         </div>
     </div>
 
-    <!-- PREVIEW MODAL -->
-    <div id="preview-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex-col">
-        <div class="bg-mining-600 p-4 flex justify-between items-center text-white shadow-lg shrink-0">
-            <h3 class="font-bold text-lg"><i class="fa-regular fa-file-lines mr-2"></i>Preview Dokumen Key-In</h3>
-            <div class="flex gap-2">
-                <button onclick="downloadScreenshot('preview-content-area', 'Workload_Preview')" class="bg-accent-600 hover:bg-accent-700 px-4 py-2 rounded text-sm font-bold flex items-center gap-2"><i class="fa-solid fa-download"></i> Simpan Gambar</button>
-                <button onclick="document.getElementById('preview-modal').classList.add('hidden'); document.getElementById('preview-modal').style.display='';" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded text-sm font-bold"><i class="fa-solid fa-xmark"></i> Tutup</button>
+    <div id="modal-preview" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl relative border border-slate-600 flex flex-col max-h-[95vh]">
+            <div class="p-5 border-b border-slate-700 flex justify-between items-center bg-slate-800 rounded-t-2xl z-10 shrink-0">
+                <h2 class="text-xl font-extrabold text-amber-500 uppercase tracking-wide"><i class="fas fa-file-invoice mr-2"></i> Dokumen Raport Final</h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white bg-slate-700 hover:bg-red-500 rounded-full w-8 h-8 flex items-center justify-center transition shadow">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-        </div>
-        <div class="flex-1 overflow-auto p-4 flex justify-center bg-gray-200 hide-scroll">
-            <!-- Wrapper Putih untuk discreenshot -->
-            <div id="preview-content-area" class="bg-white p-8 w-full max-w-4xl shadow-2xl h-max">
-                <div class="text-center border-b-2 border-mining-600 pb-4 mb-6">
-                    <h2 class="text-2xl font-black text-mining-600 uppercase">Dokumen Pencapaian Harian</h2>
-                    <p class="text-gray-500 font-semibold" id="prev-role">-</p>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
-                    <div>
-                        <p class="text-gray-500">Nama Lengkap</p>
-                        <p class="font-bold text-lg" id="prev-nama">-</p>
+            
+            <div id="preview-scroll-area" class="p-6 overflow-y-auto grow">
+                <div id="capture-area" class="bg-slate-800 p-6 rounded-xl text-white relative">
+                    <div class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+                        <i class="fas fa-warehouse text-[200px]"></i>
                     </div>
-                    <div class="text-right">
-                        <p class="text-gray-500">Tanggal / Shift</p>
-                        <p class="font-bold text-lg"><span id="prev-date">-</span> / <span id="prev-shift">-</span></p>
-                    </div>
-                </div>
 
-                <div class="mb-6">
-                    <h4 class="font-bold bg-mining-100 px-3 py-1 mb-2 border-l-4 border-mining-500">Rincian Aktivitas Pekerjaan</h4>
-                    <table class="w-full text-sm text-left border-collapse border border-gray-300">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="border border-gray-300 p-2 w-10 text-center">No</th>
-                                <th class="border border-gray-300 p-2">Deskripsi Job</th>
-                                <th class="border border-gray-300 p-2 w-16 text-center">Plan</th>
-                                <th class="border border-gray-300 p-2 w-16 text-center">Actual</th>
-                                <th class="border border-gray-300 p-2">Catatan/Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody id="prev-job-tbody"></tbody>
-                    </table>
-                    <div class="text-right font-bold p-2 bg-gray-50 border border-t-0 border-gray-300">
-                        Rata-rata Job: <span id="prev-job-score" class="text-mining-600">0%</span>
+                    <div class="text-center border-b border-slate-700 pb-5 mb-6 relative z-10">
+                        <h2 class="text-3xl font-black text-amber-500 tracking-tight">RAPORT WORKLOAD LOGISTIK</h2>
+                        <p class="text-slate-400 text-sm mt-1 font-bold tracking-widest">BSS SITE MBL</p>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <h4 class="font-bold bg-mining-100 px-3 py-1 mb-2 border-l-4 border-green-500">Safety Individu (Green Card)</h4>
-                        <div class="border border-gray-300 p-3 flex justify-between font-bold">
-                            <span>Plan: 4 | Actual: <span id="prev-safety-act" class="text-green-600">0</span></span>
-                            <span>Score: <span id="prev-safety-score" class="text-green-600">0%</span></span>
+                    <div class="grid grid-cols-2 text-sm mb-6 gap-x-6 gap-y-3 bg-slate-900/80 p-5 rounded-xl border border-slate-700/50 shadow-inner relative z-10">
+                        <div><span class="text-slate-400 font-semibold block text-xs uppercase mb-1">Nama Storeman</span> <span id="prev-name" class="font-bold text-base text-white"></span></div>
+                        <div><span class="text-slate-400 font-semibold block text-xs uppercase mb-1">Tanggal Sesi</span> <span id="prev-date" class="font-bold text-base text-white"></span></div>
+                        <div><span class="text-slate-400 font-semibold block text-xs uppercase mb-1">Kategori Posisi</span> <span id="prev-role" class="font-bold text-base text-amber-400"></span></div>
+                        <div><span class="text-slate-400 font-semibold block text-xs uppercase mb-1">Shift Kerja</span> <span id="prev-shift" class="font-bold text-base text-white"></span></div>
+                        <div class="col-span-2 border-t border-slate-700 pt-3 mt-1 flex items-center justify-between">
+                            <span class="text-slate-400 font-semibold uppercase text-xs">Status Dokumen</span> 
+                            <span id="prev-status" class="font-bold px-3 py-1 rounded-md text-xs tracking-wide">Draft</span>
                         </div>
-                    </div>
-                    <div>
-                        <h4 class="font-bold bg-mining-100 px-3 py-1 mb-2 border-l-4 border-amber-500">Improvement (Suggestion)</h4>
-                        <div class="border border-gray-300 p-3 flex justify-between font-bold">
-                            <span>Plan: 1 | Actual: <span id="prev-imp-act" class="text-amber-600">0</span></span>
-                            <span>Score: <span id="prev-imp-score" class="text-amber-600">0%</span></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-mining-600 text-white p-4 text-center">
-                    <p class="text-sm opacity-80 uppercase tracking-widest mb-1">Total Final Score</p>
-                    <h1 class="text-5xl font-black text-accent-400" id="prev-final-score">0%</h1>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- RAPORT MODAL -->
-    <div id="raport-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex-col">
-        <div class="bg-mining-700 p-4 flex justify-between items-center text-white shadow-lg shrink-0">
-            <h3 class="font-bold text-lg"><i class="fa-solid fa-award text-accent-500 mr-2"></i>Personal Report Card (Raport)</h3>
-            <div class="flex gap-2">
-                <button id="btn-dl-raport" class="bg-accent-600 hover:bg-accent-700 px-4 py-2 rounded text-sm font-bold flex items-center gap-2"><i class="fa-solid fa-download"></i> Unduh Raport</button>
-                <button onclick="document.getElementById('raport-modal').classList.add('hidden'); document.getElementById('raport-modal').style.display='';" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded text-sm font-bold"><i class="fa-solid fa-xmark"></i> Tutup</button>
-            </div>
-        </div>
-        <div class="flex-1 overflow-auto p-4 flex justify-center bg-gray-200 hide-scroll relative">
-            <div id="raport-content-area" class="bg-white w-full max-w-4xl shadow-2xl h-max overflow-hidden flex flex-col relative border-4 border-white">
-                <!-- Watermark Background -->
-                <div class="absolute inset-0 flex justify-center items-center opacity-[0.03] pointer-events-none z-0">
-                    <i class="fa-solid fa-boxes-stacked" style="font-size: 30rem;"></i>
-                </div>
-                
-                <!-- Raport Header -->
-                <div class="bg-mining-600 text-white p-8 relative z-10 border-b-4 border-accent-500">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h1 class="text-3xl font-black uppercase tracking-wider mb-1">Performance Report</h1>
-                            <p class="text-mining-200 font-medium">Warehouse Division - Storeman Operation</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm text-mining-200">ID Dokumen</p>
-                            <p class="font-mono font-bold text-accent-400" id="rap-id">-</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Employee Info -->
-                <div class="p-8 pb-4 relative z-10">
-                    <div class="flex items-center gap-6 mb-6 pb-6 border-b-2 border-dashed border-gray-300">
-                        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-4 border-gray-200">
-                            <i class="fa-solid fa-user-tie text-4xl"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h2 class="text-2xl font-bold text-mining-700" id="rap-nama">-</h2>
-                            <p class="text-gray-500 font-semibold mb-1"><span id="rap-jabatan">-</span> | NIK: <span id="rap-nik">-</span></p>
-                            <span class="inline-block bg-mining-100 text-mining-700 px-3 py-1 rounded text-xs font-bold border border-mining-200" id="rap-role">-</span>
-                        </div>
-                        <div class="text-right text-sm">
-                            <div class="mb-2"><i class="fa-regular fa-calendar mr-2 text-gray-400"></i><strong id="rap-date">-</strong></div>
-                            <div><i class="fa-solid fa-clock mr-2 text-gray-400"></i>Shift: <strong id="rap-shift">-</strong></div>
+                        <div class="col-span-2 border-t border-slate-700 pt-2 flex items-center justify-between">
+                            <span class="text-slate-400 font-semibold uppercase text-xs">Staff Approver</span> 
+                            <span id="prev-staff" class="font-bold text-pink-400 text-xs tracking-wide">-</span>
                         </div>
                     </div>
 
-                    <!-- Final Score Badge -->
-                    <div class="bg-gradient-to-r from-mining-600 to-mining-500 rounded-xl p-6 flex items-center justify-between shadow-lg text-white mb-8">
-                        <div>
-                            <p class="uppercase text-sm font-bold text-mining-200 tracking-wider mb-1">Status Penilaian Dokumen</p>
-                            <div class="flex items-center gap-3">
-                                <span id="rap-status-badge" class="px-3 py-1 rounded font-bold text-sm bg-white/20">-</span>
-                                <span class="text-sm opacity-80" id="rap-approver">-</span>
-                            </div>
-                        </div>
-                        <div class="text-right border-l border-white/20 pl-6">
-                            <p class="uppercase text-xs font-bold text-mining-200 tracking-widest mb-1">Final Score</p>
-                            <h2 class="text-5xl font-black text-accent-400 leading-none drop-shadow-md" id="rap-final-score">0%</h2>
-                        </div>
-                    </div>
-
-                    <!-- Details Tabular -->
-                    <div class="mb-6">
-                        <h3 class="font-bold text-mining-600 border-b-2 border-mining-600 pb-2 mb-3 uppercase flex items-center gap-2"><i class="fa-solid fa-list-check text-accent-500"></i> Rincian Evaluasi Pekerjaan</h3>
-                        <table class="w-full text-sm text-left border border-gray-200">
-                            <thead class="bg-gray-100 text-gray-600">
+                    <h3 class="font-bold text-lg mb-3 border-b border-slate-700 pb-2 text-white uppercase tracking-wide relative z-10"><i class="fas fa-list-check text-blue-400 mr-2"></i>Rincian Aktivitas Operasional</h3>
+                    <div class="relative z-10 rounded-lg border border-slate-700/50 overflow-hidden mb-6">
+                        <table class="w-full text-xs text-left border-collapse">
+                            <thead class="bg-slate-900 text-slate-400 uppercase font-bold">
                                 <tr>
-                                    <th class="p-3 border-b border-r w-10 text-center">No</th>
-                                    <th class="p-3 border-b border-r">Deskripsi Job</th>
-                                    <th class="p-3 border-b border-r text-center w-20">Target</th>
-                                    <th class="p-3 border-b border-r text-center w-20">Aktual</th>
-                                    <th class="p-3 border-b">Catatan</th>
+                                    <th class="p-3 border-b border-slate-700">Aktivitas</th>
+                                    <th class="p-3 text-center w-16 border-b border-slate-700">Plan</th>
+                                    <th class="p-3 text-center w-20 border-b border-slate-700 text-amber-400">Aktual</th>
+                                    <th class="p-3 border-b border-slate-700">Remarks</th>
+                                    <th class="p-3 text-center w-20 border-b border-slate-700">Doc.</th>
                                 </tr>
                             </thead>
-                            <tbody id="rap-job-tbody" class="divide-y divide-gray-200">
-                                <!-- Data diisi via JS -->
-                            </tbody>
-                            <tfoot class="bg-mining-50 font-bold border-t-2 border-gray-300">
-                                <tr>
-                                    <td colspan="3" class="p-3 text-right text-mining-700">Pencapaian Rata-Rata Pekerjaan (Bobot 80%):</td>
-                                    <td colspan="2" class="p-3 text-lg text-mining-600" id="rap-job-score">0%</td>
-                                </tr>
-                            </tfoot>
+                            <tbody id="prev-jobs-tbody" class="bg-slate-800/50"></tbody>
                         </table>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch relative z-10">
+                        <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-700/50 shadow-inner flex flex-col justify-center">
+                            <h3 class="font-bold text-sm mb-4 border-b border-slate-700 pb-2 text-amber-400 uppercase"><i class="fas fa-chart-bar text-emerald-400 mr-2"></i>Komponen Penilaian</h3>
+                            <ul class="text-sm space-y-3">
+                                <li class="flex justify-between items-center"><span class="text-slate-300 font-medium">Workload Base (80%):</span> <span id="prev-wl-achv" class="font-bold text-white bg-slate-800 px-2 py-1 rounded">0%</span></li>
+                                <li class="flex justify-between items-center"><span class="text-slate-300 font-medium">Safety (10%):</span> <span id="prev-sf-achv" class="font-bold text-emerald-300 bg-emerald-500/10 px-2 py-1 rounded">0%</span></li>
+                                <li class="flex justify-between items-center"><span class="text-slate-300 font-medium">Improvement (10%):</span> <span id="prev-im-achv" class="font-bold text-blue-300 bg-blue-500/10 px-2 py-1 rounded">0%</span></li>
+                            </ul>
+                        </div>
+                        <div class="flex flex-col items-center justify-center h-full bg-gradient-to-b from-slate-900 to-slate-950 p-6 rounded-xl border-2 border-amber-500/30 shadow-2xl text-center">
+                            <p class="text-amber-300 text-xs font-black tracking-widest mb-2 uppercase">Score Kinerja Akhir</p>
+                            <p id="prev-total-score" class="text-6xl font-black text-white mb-4 drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">0%</p>
+                            <div id="prev-grade-badge" class="px-8 py-2.5 rounded-full font-extrabold text-lg shadow-2xl tracking-wide uppercase">GRADE -</div>
+                            <p id="prev-grade-desc" class="text-xs text-amber-200 mt-3 font-bold uppercase tracking-wider">-</p>
+                        </div>
                     </div>
                     
-                    <!-- Evidence (CCP) Gallery -->
-                    <div class="mb-6">
-                        <h3 class="font-bold text-mining-600 border-b-2 border-mining-600 pb-2 mb-3 uppercase flex items-center gap-2"><i class="fa-solid fa-camera text-accent-500"></i> Lampiran Dokumentasi (CCP)</h3>
-                        <div id="rap-gallery" class="grid grid-cols-4 gap-3 bg-gray-50 p-4 border border-gray-200 rounded">
-                            <!-- Foto akan dimuat di sini -->
-                        </div>
-                    </div>
-
-                    <!-- Extra Metrics -->
-                    <div class="grid grid-cols-2 gap-6 mb-8">
-                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 relative overflow-hidden">
-                            <div class="absolute right-0 top-0 w-16 h-16 bg-green-100 rounded-bl-full -mr-2 -mt-2 z-0"></div>
-                            <h4 class="font-bold text-gray-800 mb-2 relative z-10">Safety Individu</h4>
-                            <p class="text-xs text-gray-500 mb-2 relative z-10">Green Card (Target: 4)</p>
-                            <div class="flex justify-between items-end relative z-10">
-                                <span class="text-2xl font-black text-green-600" id="rap-safety-act">0</span>
-                                <span class="font-bold text-gray-600">Skor: <span id="rap-safety-score" class="text-green-600">0%</span></span>
-                            </div>
-                        </div>
-                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 relative overflow-hidden">
-                            <div class="absolute right-0 top-0 w-16 h-16 bg-amber-100 rounded-bl-full -mr-2 -mt-2 z-0"></div>
-                            <h4 class="font-bold text-gray-800 mb-2 relative z-10">Improvement Individu</h4>
-                            <p class="text-xs text-gray-500 mb-2 relative z-10">Suggestion (Target: 1)</p>
-                            <div class="flex justify-between items-end relative z-10">
-                                <span class="text-2xl font-black text-amber-600" id="rap-imp-act">0</span>
-                                <span class="font-bold text-gray-600">Skor: <span id="rap-imp-score" class="text-amber-600">0%</span></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Signature Area -->
-                    <div class="border-t-2 border-gray-300 pt-6 mt-6 pb-6 flex justify-between text-sm">
-                        <div class="text-center">
-                            <p class="text-gray-500 mb-12 font-semibold">Dibuat Oleh,</p>
-                            <p class="font-bold border-b border-gray-400 pb-1" id="rap-sign-nama">-</p>
-                            <p class="text-gray-500 mt-1" id="rap-sign-jabatan">-</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-gray-500 mb-12 font-semibold">Mengetahui/Menyetujui,</p>
-                            <p class="font-bold border-b border-gray-400 pb-1" id="rap-sign-approver">-</p>
-                            <p class="text-gray-500 mt-1" id="rap-sign-comment">-</p>
-                        </div>
+                    <div class="mt-8 text-center text-[10px] text-slate-400 font-semibold uppercase tracking-widest relative z-10">
+                        -- Dokumen sah sistem Logistik BSS Site MBL --
                     </div>
                 </div>
+            </div>
+            
+            <div id="modal-actions" class="p-5 bg-slate-900 border-t border-slate-700 flex justify-end gap-4 rounded-b-2xl shrink-0">
+                <button onclick="downloadAsJPG()" class="bg-slate-700 hover:bg-slate-600 text-white px-6 py-2.5 rounded-xl font-bold transition shadow-md border border-slate-600 flex items-center">
+                    <i class="fas fa-download mr-2"></i> Unduh JPG
+                </button>
+                <button id="btn-submit-final" onclick="submitFinal()" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-900 px-8 py-2.5 rounded-xl font-extrabold transition shadow-lg flex items-center">
+                    <i class="fas fa-paper-plane mr-2"></i> SUBMIT FINAL
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- ACTION APPROVAL MODAL (For Staff) -->
-    <div id="action-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex-col items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden fade-in">
-            <div class="bg-mining-600 p-4 text-white font-bold flex justify-between items-center">
-                <span id="action-title">Tindak Lanjut Dokumen</span>
-                <button onclick="document.getElementById('action-modal').classList.add('hidden'); document.getElementById('action-modal').style.display='';" class="hover:text-red-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+    <div id="modal-review" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl relative border border-slate-600">
+            <div class="p-6 border-b border-slate-700 bg-slate-900 rounded-t-2xl flex justify-between items-center">
+                <h2 class="text-xl font-extrabold text-pink-500 uppercase tracking-wide"><i class="fas fa-clipboard-check mr-2"></i>Panel Validasi Staff</h2>
+                <button onclick="closeReviewModal()" class="text-slate-400 hover:text-white transition bg-slate-800 p-2 rounded-full hover:bg-red-500"><i class="fas fa-times fa-lg"></i></button>
             </div>
-            <div class="p-6">
-                <input type="hidden" id="action-doc-id">
-                <input type="hidden" id="action-type">
+            <div class="p-6 max-h-[70vh] overflow-y-auto">
+                <input type="hidden" id="rev-log-index">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-6 bg-slate-900/80 p-5 rounded-xl border border-slate-700/50 shadow-inner">
+                    <div><label class="text-slate-400 text-xs font-bold uppercase tracking-wide block mb-1">Storeman</label><div id="rev-name" class="font-bold text-white text-base"></div></div>
+                    <div><label class="text-slate-400 text-xs font-bold uppercase tracking-wide block mb-1">Posisi</label><div id="rev-role" class="font-bold text-amber-400 text-base"></div></div>
+                    <div><label class="text-slate-400 text-xs font-bold uppercase tracking-wide block mb-1">Score Awal</label><div id="rev-score" class="font-bold text-white text-base bg-slate-800 px-2 py-0.5 rounded inline-block"></div></div>
+                    <div>
+                        <label class="text-slate-400 text-xs font-bold uppercase tracking-wide block mb-1">Nama Approver</label>
+                        <input type="text" id="rev-staff-name" class="input-dark w-full px-3 py-1.5 text-sm font-bold text-pink-400" readonly>
+                    </div>
+                </div>
                 
-                <p class="text-sm text-gray-600 mb-4" id="action-desc">Berikan komentar atau alasan untuk tindakan ini (Wajib jika menolak).</p>
-                
-                <textarea id="action-comment" rows="3" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-mining-500 mb-4 text-sm" placeholder="Ketik catatan / komentar di sini..."></textarea>
-                
-                <div class="flex gap-3">
-                    <button type="button" onclick="document.getElementById('action-modal').classList.add('hidden'); document.getElementById('action-modal').style.display='';" class="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2 rounded-lg transition-colors">Batal</button>
-                    <button type="button" id="btn-confirm-action" onclick="submitApprovalAction()" class="flex-1 bg-mining-600 text-white font-bold py-2 rounded-lg hover:bg-mining-700 transition-colors">Konfirmasi</button>
+                <div class="rounded-lg border border-slate-700/50 overflow-hidden">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-900/80 text-slate-400 text-xs uppercase font-bold border-b border-slate-700/50">
+                            <tr>
+                                <th class="p-4 w-1/3">Aktivitas & Dokumen Bukti</th>
+                                <th class="p-4 text-center">Plan</th>
+                                <th class="p-4 border-r border-slate-700/50">Info Inputan Asli</th>
+                                <th class="p-4 w-28 bg-pink-900/20 text-center text-pink-400">Revisi Aktual (%)</th>
+                                <th class="p-4 w-56 bg-pink-900/20 text-pink-400">Feedback / Catatan Staff</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rev-jobs-tbody" class="divide-y divide-slate-700/50 bg-slate-800/40"></tbody>
+                    </table>
                 </div>
             </div>
+            <div class="p-5 bg-slate-900 border-t border-slate-700 flex justify-end gap-4 rounded-b-2xl">
+                <button onclick="processApproval('Rejected')" class="bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-xl font-bold transition shadow-lg flex items-center">
+                    <i class="fas fa-times-circle mr-2"></i> REJECT
+                </button>
+                <button onclick="processApproval('Approved')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-2.5 rounded-xl font-extrabold transition shadow-lg shadow-emerald-500/20 flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i> APPROVE & UPDATE
+                </button>
+            </div>
         </div>
-    </div>
-
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3 px-6 py-4 rounded-lg shadow-xl font-bold text-white max-w-sm">
-        <i id="toast-icon" class="fa-solid fa-circle-info text-2xl"></i>
-        <p id="toast-message" class="text-sm leading-tight"></p>
     </div>
 
     <script>
-        // --- KONFIGURASI BACKEND ---
-        // Sesuai dengan backend terbaru
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2Bt8-bEcOHkmLYF81FlIhkwGcxdJKlmGu1fTqJR5MxU8Vr76kxAd5IkT2HYViodxjxw/exec";
+        const WEB_APP_URL_SHEETS = "https://script.google.com/macros/s/AKfycbwCXN84KVG9F4rrDU7XLJvwTSSZo60TObq_3ECEqKTx_13hDtzuLNLwOfMefRLecNbM/exec";
+        const WEB_APP_URL_DRIVE = "https://script.google.com/macros/s/AKfycbxUWMVOXxnXyEjQsHFZbxk1745-FP2ooJyfxUHjNe1xp7bk9hCqhQnmAZe_UoxGCh65/exec";
 
-        // --- STATE APLIKASI ---
-        let currentUser = null; 
-        let serverData = [];    
-        let performanceChartInstance = null;
-        let personalChartInstance = null;
-        let isDashboardFilterInit = false;
-
-        // Data Pekerjaan spesifik sesuai Role
-        const roleData = {
-            "STOREMAN ISSUING": [
-                "P5M dan Job Pending", "Scanning Area Kerja awal Shift", 
-                "Menerima dan memvalidasi dokumen permintaan barang (Issue Slip / Material Requisition) dari user.",
-                "Mengambil barang dari lokasi penyimpanan (bin/rak) sesuai dengan dokumen permintaan.",
-                "Melakukan posting Good Issue (GI) atau Material Dispatch di sistem inventory (SAP) agar stok terpotong secara real-time.",
-                "Menerima pengembalian barang (Return to Store) dari mekanik jika ada part yang berlebih atau tidak jadi dipakai, dan mengembalikannya ke sistem serta rak fisik.",
-                "Monitoring Part bekas kembali dari User", "Monitoring Part Kritis", 
-                "Monitoring MO Outstanding Dan Resume Harian Transaksi Receiving Daily",
-                "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
+        const jobsByRole = {
+            issuing: [
+                "P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Menerima dan memvalidasi dokumen permintaan barang (Issue Slip / Material Requisition) dari user.", "Mengambil barang dari lokasi penyimpanan (bin/rak) sesuai dengan dokumen permintaan.", "Melakukan posting Good Issue (GI) atau Material Dispatch di sistem inventory (SAP) agar stok terpotong secara real-time.", "Menerima pengembalian barang (Return to Store) dari mekanik jika ada part yang berlebih atau tidak jadi dipakai, dan mengembalikannya ke sistem serta rak fisik.", "Monitoring Part bekas kembali dari User", "Monitoring Part Kritis", "Monitoring MO Outstanding Dan Resume Harian Transaksi Receiving Daily", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
             ],
-            "STOREMAN RECEIVING": [
-                "P5M dan Job Pending", "Scanning Area Kerja awal Shift",
-                "Mengarahkan truk ekspedisi/supplier ke area bongkar dan melakukan penurunan barang (manual atau dengan forklift).",
-                "Mencocokkan fisik barang (jumlah, nomor part, deskripsi) dengan dokumen Surat Jalan (Delivery Order) dan Purchase Order (PO).",
-                "Membuat laporan (Discrepancy Report) jika menemukan barang rusak (damage), kurang (short/loss), atau berlebih (overage).",
-                "Melakukan input Goods Receipt (GR) di sistem agar tagihan supplier bisa diproses dan barang diakui sebagai stok.",
-                "Menyusun barang yang sudah diterima ke lokasi rak (bin location) yang tepat dan mencatat perpindahannya.",
-                "Monitoring Part Mutasi (Pembuatan Surat Jalan , GI-PO STO, Packing)",
-                "Memastikan Semua Document Tervalidasi Dan tersusun Rapi", "Resume Harian Transaksi Receiving Daily",
-                "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
+            receiving: [
+                "P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Mengarahkan truk ekspedisi/supplier ke area bongkar dan melakukan penurunan barang (manual atau dengan forklift).", "Mencocokkan fisik barang (jumlah, nomor part, deskripsi) dengan dokumen Surat Jalan (Delivery Order) dan Purchase Order (PO).", "Membuat laporan (Discrepancy Report) jika menemukan barang rusak (damage), kurang (short/loss), atau berlebih (overage).", "Melakukan input Goods Receipt (GR) di sistem agar tagihan supplier bisa diproses dan barang diakui sebagai stok.", "Menyusun barang yang sudah diterima ke lokasi rak (bin location) yang tepat dan mencatat perpindahannya.", "Monitoring Part Mutasi (Pembuatan Surat Jalan , GI-PO STO, Packing)", "Memastikan Semua Document Tervalidasi Dan tersusun Rapi", "Resume Harian Transaksi Receiving Daily", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
             ],
-            "STOREMAN BACKLOG": [
-                "P5M dan Job Pending", "Scanning Area Kerja awal Shift",
-                "Menerima daftar kebutuhan material dari Planner untuk jadwal Planned Maintenance (PM) atau Backlog / Breakdown Maintenance (BM).",
-                "Mengumpulkan part-part yang dibutuhkan untuk satu MO tertentu dan menyimpannya di dalam keranjang/box khusus (Staging Area).",
-                "Monitoring Kesiapan Part: Melacak status ketersediaan part per MO (misal: \"MO Unit X9252 readiness 80%, kurang 2 hose\").",
-                "Koordinasi Kekurangan Part: Secara aktif berkoordinasi dengan Tim Purchasing terkait part kritis yang masih berstatus indent.",
-                "Monitoring Outstanding MO-PR ( Standart Max MO-PR = 2 hari)", "Resume Harian Transaksi Backlog Daily",
-                "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
+            backlog: [
+                "P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Menerima daftar kebutuhan material dari Planner untuk jadwal Planned Maintenance (PM) atau Backlog / Breakdown Maintenance (BM).", "Mengumpulkan part-part yang dibutuhkan untuk satu MO tertentu dan menyimpannya di dalam keranjang/box khusus (Staging Area).", "Monitoring Kesiapan Part: Melacak status ketersediaan part per MO (misal: 'MO Unit X9252 readiness 80%, kurang 2 hose').", "Koordinasi Kekurangan Part: Secara aktif berkoordinasi dengan Tim Purchasing terkait part kritis yang masih berstatus indent (belum datang).", "Monitoring Outstanding MO-PR ( Standart Max MO-PR = 2 hari)", "Resume Harian Transaksi Backlog Daily", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
             ],
-            "STOREMAN STOCK TAKE (Cycle Count & Akurasi)": [
-                "P5M dan Job Pending", "Scanning Area Kerja awal Shift",
-                "Melakukan penghitungan fisik harian berdasarkan Aktual Vs System",
-                "Investigasi Selisih: Jika ada variance (selisih fisik vs sistem),",
-                "melakukan pelacakan histori transaksi (kapan terakhir barang keluar/masuk) untuk mencari akar masalah.",
-                "Pemeliharaan Lokasi (Bin Maintenance): Merapikan barang yang salah letak (misplaced) ke lokasi yang benar.",
-                "Perawatan Label: Mengganti barcode atau label rak yang pudar, sobek, atau hilang.",
-                "Melakukan Audit Transaksi Daily", "Resume Harian Jumlah Stock Take Daily",
-                "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
+            stock_take: [
+                "P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Melakukan penghitungan fisik harian berdasarkan Aktual Vs System", "Investigasi Selisih: Jika ada variance (selisih fisik vs sistem), melakukan pelacakan histori transaksi (kapan terakhir barang keluar/masuk) untuk mencari akar masalah.", "Pemeliharaan Lokasi (Bin Maintenance): Merapikan barang yang salah letak (misplaced) ke lokasi yang benar.", "Perawatan Label: Mengganti barcode atau label rak yang pudar, sobek, atau hilang.", "Melakukan Audit Transaksi Daily", "Resume Harian Jumlah Stock Take Daily", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
             ],
-            "STOREMAN MODULE": [
-                "P5M dan Job Pending", "Scanning Area Kerja awal Shift",
-                "Melakukan penghitungan fisik harian Module Aktual yang RFU",
-                "Membuat Raport Harian Stock Module RFU / Damaged",
-                "Memonitoring Transaksi Serialize , Module / TIre , Open/ Close Dismantle",
-                "Manajemen Core (Barang Bekas): Mengatur penerimaan core (modul rusak dari unit) untuk Dilakukan Repair Vendor (WO EXT) / Repair Internal CMX (WO INT)",
-                "Manajemen Yard: Mengatur tata letak penyimpanan modul di luar ruangan (laydown yard) menggunakan alas (pallet/balok) agar tidak bersentuhan langsung dengan tanah.",
-                "Koordinasi dengan Planner dan Comex untuk pengadaan Module Rotable For PCR SCH/BUS",
-                "Memonitoring Transaksi PCR Planner Monthly",
-                "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
+            module: [
+                "P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Melakukan penghitungan fisik harian Module Aktual yang RFU", "Membuat Raport Harian Stock Module RFU / Damaged", "Memonitoring Transaksi Serialize , Module / TIre , Open/ Close Dismantle", "Manajemen Core (Barang Bekas): Mengatur penerimaan core (modul rusak dari unit) untuk Dilakukan Repair Vendor (WO EXT) / Repair Internal CMX (WO INT)", "Manajemen Yard: Mengatur tata letak penyimpanan modul di luar ruangan (laydown yard) menggunakan alas (pallet/balok) agar tidak bersentuhan langsung dengan tanah.", "Koordinasi dengan Planner dan Comex untuk pengadaan Module Rotable For PCR SCH/BUS", "Memonitoring Transaksi PCR Planner Monthly", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
             ],
-            "OILMAN": [
-                "P5M dan Job Pending", "Scanning Area Kerja awal Shift",
-                "Inspeksi Area TPS , Melakukan Press Filter dan Pembersihan area TPS",
-                "Membuat Laporan stock Oli, Grease , Coolant",
-                "Melakukan Issued Transaksi Penggunaan Oil, Grease , Coolant",
-                "Penerimaan Cairan: Menerima pengiriman oli/coolant dalam bentuk IBC Tank, drum, pails",
-                "Pengukuran Level: Melakukan dipping atau Sounding meteran tangki setiap pagi untuk mencatat saldo awal dan akhir.",
-                "Dispensing: Memompa/mengeluarkan oli dan bahan bakar ke Service Truck (Lube Truck) atau wadah jerigen mekanik menggunakan sistem flowmeter, dan mencatat angka keluarannya secara presisi.",
-                "Manajemen Limbah (B3) & HSE: Memastikan area Lube Farm bersih dari tumpahan oli (spill control), serta mengelola penempatan drum kosong agar rapi dan tidak mencemari lingkungan.",
-                "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
+            oilman: [
+                "P5M dan Job Pending", "Scanning Area Kerja awal Shift", "Inspeksi Area TPS , Melakukan Press Filter dan Pembersihan area TPS", "Membuat Laporan stock Oli, Grease , Coolant", "Melakukan Issued Transaksi Penggunaan Oil, Grease , Coolant", "Penerimaan Cairan: Menerima pengiriman oli/coolant dalam bentuk IBC Tank, drum, pails", "Pengukuran Level: Melakukan dipping atau Sounding meteran tangki setiap pagi untuk mencatat saldo awal dan akhir.", "Dispensing: Memompa/mengeluarkan oli dan bahan bakar ke Service Truck (Lube Truck) atau wadah jerigen mekanik menggunakan sistem flowmeter, dan mencatat angka keluarannya secara presisi.", "Manajemen Limbah (B3) & HSE: Memastikan area Lube Farm bersih dari tumpahan oli (spill control), serta mengelola penempatan drum kosong agar rapi dan tidak mencemari lingkungan.", "Membersihkan area kerja (sapu/pel), membuang sisa sampah operasional, dan mengembalikan alat kerja (Hand Pallet, dll)"
             ]
         };
 
-        // --- UTILITAS DASAR ---
-        
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            document.getElementById('toast-message').innerText = message;
-            
-            toast.className = `fixed bottom-5 right-5 transform transition-all duration-300 z-50 flex items-center gap-3 px-6 py-4 rounded-lg shadow-xl font-bold text-white max-w-sm ${
-                type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
-            }`;
-            
-            icon.className = `text-2xl fa-solid ${
-                type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info'
-            }`;
+        let currentJobs = [];
+        let logsData = JSON.parse(localStorage.getItem('storemanLogs')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
 
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+            toast.innerHTML = `<i class="fas ${icon} fa-lg"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
         }
 
-        function showLoader(show, text = 'Memproses data...') {
-            const loader = document.getElementById('data-loader');
-            document.getElementById('loader-text').innerText = text;
-            if (show) loader.classList.replace('hidden', 'flex');
-            else loader.classList.replace('flex', 'hidden');
-        }
-
-        function switchView(viewId) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${viewId}`).classList.add('active');
-            
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('border-accent-500', 'bg-mining-500', 'text-accent-400');
-                if (btn.dataset.target === viewId) {
-                    btn.classList.add('border-accent-500', 'bg-mining-500', 'text-accent-400');
-                }
-            });
-
-            if (window.innerWidth < 640) document.getElementById('sidebar').classList.add('hidden');
-        }
-
-        const formatDate = (dateString) => {
-            const options = { year: 'numeric', month: 'short', day: 'numeric', hour:'2-digit', minute:'2-digit' };
-            return new Date(dateString).toLocaleDateString('id-ID', options);
-        };
-
-        //        // CORS-Friendly Fetch
-        async function fetchAppScript(payload) {
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) throw new Error("Jaringan bermasalah atau Server Google menolak.");
-                const result = await response.json();
-                if(result.status === "error") throw new Error(result.message);
-                return result;
-            } catch (err) {
-                console.error("Fetch Error:", err);
-                throw new Error("Gagal menghubungi server. Pastikan URL Google Script benar dan dapat diakses (Anyone). " + err.message);
-            }
-        }
-
-        // --- LOGIN & AUTHENTICATION ---
-        
-        document.getElementById('btn-login').addEventListener('click', async () => {
-            const nik = document.getElementById('nik-input').value.trim();
-            const errDiv = document.getElementById('login-error');
-            
-            if(!nik) {
-                errDiv.innerText = "NIK tidak boleh kosong!";
-                errDiv.classList.remove('hidden');
-                return;
-            }
-
-            try {
-                errDiv.classList.add('hidden');
-                document.getElementById('btn-login').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...`;
-                document.getElementById('btn-login').disabled = true;
-
-                const res = await fetchAppScript({ action: 'login', nik: nik });
-                
-                currentUser = res.user;
-                
-                // Set UI Details
-                document.getElementById('user-name-display').innerText = currentUser.nama;
-                document.getElementById('user-nik-display').innerText = currentUser.nik;
-                document.getElementById('user-role-display').innerText = currentUser.jabatan;
-                
-                // Role Base Access (Check if Staff/SPV)
-                const isStaff = currentUser.jabatan.toLowerCase().includes('staff') || currentUser.jabatan.toLowerCase().includes('spv') || currentUser.jabatan.toLowerCase().includes('supervisor');
-                if(isStaff) {
-                    document.getElementById('menu-approval').classList.remove('hidden');
-                } else {
-                    document.getElementById('menu-approval').classList.add('hidden');
-                }
-
-                document.getElementById('login-modal').classList.add('hidden');
-                showToast(`Selamat datang, ${currentUser.nama}`);
-                
-                // Init data
-                refreshDataFromServer();
-                document.getElementById('form-date-display').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-            } catch(e) {
-                errDiv.innerText = e.message;
-                errDiv.classList.remove('hidden');
-            } finally {
-                document.getElementById('btn-login').innerHTML = `<span>Masuk Sistem</span><i class="fa-solid fa-arrow-right-to-bracket"></i>`;
-                document.getElementById('btn-login').disabled = false;
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (currentUser) {
+                applyUserSession(currentUser);
+                await syncDataFromServer();
+            } else {
+                document.getElementById('login-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
             }
         });
 
-        function handleLogout() {
-            currentUser = null;
-            document.getElementById('nik-input').value = '';
-            document.getElementById('login-modal').classList.remove('hidden');
-        }
-
-        //        
-        async function refreshDataFromServer() {
-            showLoader(true, "Mengambil data terbaru dari server...");
+        async function syncDataFromServer() {
             try {
-                const res = await fetchAppScript({ action: 'getWorkloads' });
-                serverData = res.data || [];
-                renderDashboard();
-                renderLogs();
-                renderApproval();
-                renderPersonalInfo();
-                loadPreviousExtras(); // Coba load sisa Green card
-            } catch(e) {
-                showToast("Gagal mengambil data riwayat: " + e.message, 'error');
+                const response = await fetch(WEB_APP_URL_SHEETS, {
+                    redirect: "follow",
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "getData" })
+                });
+                if(!response.ok) throw new Error("HTTP error " + response.status);
+                const result = await response.json();
+                if(result.status === 'success' && result.data) {
+                    logsData = result.data;
+                    localStorage.setItem('storemanLogs', JSON.stringify(logsData));
+                    renderLog();
+                    renderDashboard();
+                    renderApprovalTable();
+                }
+            } catch (error) {
+                console.error("Sync Error:", error);
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const nikInput = document.getElementById('login-nik').value.trim();
+            const btn = document.getElementById('btn-login');
+            
+            if(!nikInput) return showToast("NIK tidak boleh kosong!", "error");
+
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loader inline-block mr-2 align-middle"></div> Memproses...';
+
+            try {
+                const response = await fetch(WEB_APP_URL_SHEETS, {
+                    redirect: "follow", 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "login", nik: nikInput })
+                });
+
+                if(!response.ok) throw new Error("HTTP error " + response.status);
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    currentUser = result.user;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    applyUserSession(currentUser);
+                    showToast(`Akses Diterima. Selamat datang, ${currentUser.name}!`, 'success');
+                    await syncDataFromServer();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (error) {
+                console.error("Login Error:", error);
+                showToast("Kesalahan Jaringan. Pastikan internet stabil.", "error");
             } finally {
-                showLoader(false);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i> MASUK SISTEM';
             }
         }
 
-        // Memuat sisa actual Safety & Improvement bulan ini jika belum capai target
-        function loadPreviousExtras() {
-            if(!currentUser) return;
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
+        function applyUserSession(user) {
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
             
-            // Cari data user ini bulan ini
-            const myData = serverData.filter(d => {
-                const dDate = new Date(d.Timestamp);
-                return d.NIK.toString() === currentUser.nik.toString() && 
-                       dDate.getMonth() === currentMonth && 
-                       dDate.getFullYear() === currentYear;
-            });
-
-            if(myData.length > 0) {
-                // Ambil data paling terakhir disubmit
-                const latest = myData[0]; // karena server mengirim dari terbaru ke terlama
-                try {
-                    // Ekstrak Actual dari skor sebelumnya jika memungkinkan
-                    // Kita cari tahu dari total score
-                    let s_actual = Math.round((parseFloat(latest['Safety (%)']) / 10) * 4); // Balik rumus
-                    let i_actual = Math.round((parseFloat(latest['Improvement (%)']) / 10) * 1);
-                    
-                    if(s_actual > 0 && s_actual < 4) document.getElementById('safety-actual').value = s_actual;
-                    if(i_actual > 0 && i_actual < 1) document.getElementById('improve-actual').value = i_actual;
-                    
-                    calculateScores();
-                } catch(e) {}
-            }
-        }
-
-        //        
-        function renderDashboard() {
-            if (!isDashboardFilterInit) {
-                const yearSelect = document.getElementById('filter-year');
-                const currYear = new Date().getFullYear();
-                yearSelect.innerHTML = `<option value="all">Semua Tahun</option><option value="${currYear}" selected>${currYear}</option><option value="${currYear-1}">${currYear-1}</option>`;
-                
-                document.getElementById('filter-month').value = new Date().getMonth(); // Default ke Bulan Berjalan
-                document.getElementById('filter-week').value = 'all'; // Default Semua Minggu
-                isDashboardFilterInit = true;
-            }
-
-            const filterYear = document.getElementById('filter-year').value;
-            const filterMonth = document.getElementById('filter-month').value;
-            const filterWeek = document.getElementById('filter-week').value;
-
-            // Filter data
-            const dataToView = serverData.filter(d => {
-                const date = new Date(d.Timestamp);
-                const dYear = date.getFullYear();
-                const dMonth = date.getMonth();
-
-                if (filterYear !== 'all' && dYear.toString() !== filterYear) return false;
-                if (filterMonth !== 'all' && dMonth.toString() !== filterMonth) return false;
-
-                if (filterWeek !== 'all') {
-                    const dateNum = date.getDate();
-                    let firstDay = new Date(dYear, dMonth, 1).getDay();
-                    firstDay = firstDay === 0 ? 6 : firstDay - 1; // Senin=0, Minggu=6
-                    
-                    let weekNum = Math.ceil((dateNum + firstDay) / 7);
-                    if (weekNum > 5) weekNum = 5; 
-                    
-                    if (weekNum.toString() !== filterWeek) return false;
-                }
-                return true;
-            });
-
-            // 1. Hitung Statistik Atas
-            let pending = 0, approved = 0, rejected = 0;
-            let totalScoreSum = 0;
-            let validScores = 0;
-
-            dataToView.forEach(d => {
-                if(d.Status === 'Pending') pending++;
-                else if(d.Status === 'Approved') approved++;
-                else if(d.Status === 'Rejected') rejected++;
-
-                const score = parseFloat(d['Final Score (%)']);
-                if(!isNaN(score)) {
-                    totalScoreSum += score;
-                    validScores++;
-                }
-            });
-
-            document.getElementById('dash-pending').innerText = pending;
-            document.getElementById('dash-approved').innerText = approved;
-            document.getElementById('dash-rejected').innerText = rejected;
+            document.getElementById('user-display-name').textContent = user.name;
+            document.getElementById('user-display-role').textContent = `${user.role} • ${user.nik}`;
             
-            const avgScore = validScores > 0 ? (totalScoreSum / validScores).toFixed(1) : 0;
-            document.getElementById('dash-avg-score').innerText = `${avgScore}%`;
+            const navApproval = document.getElementById('nav-approval');
+            const navInput = document.getElementById('nav-input');
+            const isStaff = user.role.toUpperCase().includes('STAFF');
 
-            // 2. Data Tabel 5 Terakhir
-            const tbody = document.getElementById('dash-recent-table');
-            tbody.innerHTML = '';
-            const recent = dataToView.slice(0, 5); // 5 Data teratas dari data terfilter
-            
-            if(recent.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">Belum ada data pada periode ini</td></tr>`;
+            if (isStaff) {
+                navApproval.classList.remove('hidden');
+                navInput.classList.add('hidden'); 
             } else {
-                recent.forEach(d => {
-                    const st = d.Status;
-                    const stClass = st==='Approved' ? 'bg-green-100 text-green-700' : (st==='Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700');
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="p-3 border-b">${formatDate(d.Timestamp)}</td>
-                            <td class="p-3 border-b font-bold text-mining-600">${d.Nama}</td>
-                            <td class="p-3 border-b text-xs">${d['Kategori Role']}</td>
-                            <td class="p-3 border-b text-center font-bold text-accent-600">${d['Final Score (%)']}%</td>
-                            <td class="p-3 border-b text-center"><span class="${stClass} px-2 py-1 rounded text-xs font-bold">${st}</span></td>
-                        </tr>
-                    `;
-                });
+                navApproval.classList.add('hidden');
+                navInput.classList.remove('hidden');
             }
-
-            // 3. Leaderboard Calculation
-            const leaderboardContainer = document.getElementById('leaderboard-container');
-            leaderboardContainer.innerHTML = '';
             
-            const userScoresMap = {};
-            dataToView.forEach(d => {
-                if (d.Status === 'Approved') { // Hanya hitung yang di-approve
-                    if(!userScoresMap[d.Nama]) {
-                        userScoresMap[d.Nama] = { nik: d.NIK, jabatan: d.Jabatan, total: 0, count: 0 };
-                    }
-                    userScoresMap[d.Nama].total += parseFloat(d['Final Score (%)']);
-                    userScoresMap[d.Nama].count++;
-                }
-            });
-
-            const leaderboardArray = Object.keys(userScoresMap).map(nama => ({
-                nama: nama,
-                nik: userScoresMap[nama].nik,
-                jabatan: userScoresMap[nama].jabatan,
-                avg: (userScoresMap[nama].total / userScoresMap[nama].count).toFixed(2)
-            })).sort((a, b) => b.avg - a.avg);
-
-            if(leaderboardArray.length === 0) {
-                leaderboardContainer.innerHTML = `<div class="text-center text-gray-400 py-6"><i class="fa-solid fa-trophy text-2xl mb-2 block"></i> Belum ada data Approved</div>`;
-            } else {
-                leaderboardArray.forEach((user, index) => {
-                    let rankIcon = `<span class="font-bold text-gray-400 text-lg w-6 text-center">${index + 1}</span>`;
-                    if (index === 0) rankIcon = `<i class="fa-solid fa-medal text-2xl text-yellow-500"></i>`;
-                    else if (index === 1) rankIcon = `<i class="fa-solid fa-medal text-2xl text-gray-400"></i>`;
-                    else if (index === 2) rankIcon = `<i class="fa-solid fa-medal text-2xl text-amber-700"></i>`;
-
-                    leaderboardContainer.innerHTML += `
-                        <div class="flex items-center gap-3 p-3 mb-2 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                            <div class="w-8 flex justify-center">${rankIcon}</div>
-                            <div class="flex-1 min-w-0">
-                                <p class="font-bold text-mining-700 truncate text-sm">${user.nama}</p>
-                                <p class="text-xs text-gray-500 truncate">${user.jabatan}</p>
-                            </div>
-                            <div class="font-black text-accent-600 text-lg">${user.avg}%</div>
-                        </div>
-                    `;
-                });
-            }
-
-            // 4. Update Chart (Trend Harian)
-            updateChart(dataToView);
-        }
-
-        function updateChart(dataToView) {
-            const dateMap = {};
-            // Urutkan data dari lama ke baru khusus untuk chart
-            const sortedData = [...dataToView].sort((a, b) => new Date(a.Timestamp) - new Date(b.Timestamp));
-            
-            sortedData.forEach(d => {
-                const dateStr = new Date(d.Timestamp).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
-                if(!dateMap[dateStr]) dateMap[dateStr] = { sum: 0, count: 0 };
-                dateMap[dateStr].sum += parseFloat(d['Final Score (%)']);
-                dateMap[dateStr].count++;
-            });
-
-            const labels = Object.keys(dateMap);
-            const dataPoints = labels.map(l => (dateMap[l].sum / dateMap[l].count).toFixed(1));
-
-            const ctx = document.getElementById('performanceChart').getContext('2d');
-            if(performanceChartInstance) performanceChartInstance.destroy();
-            
-            performanceChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Rata-rata Final Score (%)',
-                        data: dataPoints,
-                        borderColor: '#f59e0b',
-                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.3,
-                        fill: true,
-                        pointBackgroundColor: '#0f172a'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { 
-                        y: { beginAtZero: true, max: 105, grid: { borderDash: [5, 5] } },
-                        x: { grid: { display: false } }
+            const nameInput = document.getElementById('name');
+            if(nameInput && !isStaff) {
+                nameInput.value = user.name;
+                const roleSelect = document.getElementById('role');
+                const roleLower = user.role.toLowerCase();
+                for (let i = 0; i < roleSelect.options.length; i++) {
+                    if (roleSelect.options[i].text.toLowerCase().includes(roleLower)) {
+                        roleSelect.selectedIndex = i;
+                        renderJobActivities();
+                        break;
                     }
                 }
-            });
+            }
+            
+            document.getElementById('date').valueAsDate = new Date();
+            if(!document.getElementById('form-id').value) {
+                document.getElementById('form-id').value = "ID-" + new Date().getTime();
+            }
+            
+            switchTab('dashboard');
         }
 
-        // --- FUNGSI PERSONAL INFO ---
-        function renderPersonalInfo() {
-            if(!currentUser) return;
-            
-            document.getElementById('pers-name').innerText = currentUser.nama;
-            document.getElementById('pers-role').innerText = currentUser.jabatan;
+        function logout() {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            window.location.reload();
+        }
 
-            // Filter data yang NIK nya sama dengan user yang login
-            const myData = serverData.filter(d => d.NIK.toString() === currentUser.nik.toString());
-            const myApproved = myData.filter(d => d.Status === 'Approved');
+        function switchTab(tabId) {
+            document.getElementById('tab-dashboard').classList.add('hidden');
+            document.getElementById('tab-input').classList.add('hidden');
+            document.getElementById('tab-log').classList.add('hidden');
+            document.getElementById('tab-approval').classList.add('hidden');
             
-            let valid = myApproved.length;
-            let avgFinal = valid > 0 ? (myApproved.reduce((sum, d) => sum + (parseFloat(d['Final Score (%)']) || 0), 0) / valid).toFixed(1) : 0;
-            let avgJob = valid > 0 ? (myApproved.reduce((sum, d) => sum + (parseFloat(d['Rata-rata Job (%)']) || 0), 0) / valid).toFixed(1) : 0;
-            let avgSafety = valid > 0 ? (myApproved.reduce((sum, d) => sum + (parseFloat(d['Safety (%)']) || 0), 0) / valid).toFixed(1) : 0;
-            let avgImp = valid > 0 ? (myApproved.reduce((sum, d) => sum + (parseFloat(d['Improvement (%)']) || 0), 0) / valid).toFixed(1) : 0;
-
-            document.getElementById('pers-avg-final').innerText = avgFinal + "%";
-            document.getElementById('pers-avg-job').innerText = avgJob + "%";
-            document.getElementById('pers-avg-safety').innerText = avgSafety + "%";
-            document.getElementById('pers-total-doc').innerText = myData.length;
-
-            // Render Table (Histori Personal)
-            const tbody = document.getElementById('pers-table-body');
-            tbody.innerHTML = '';
-            
-            if(myData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-400">Belum ada riwayat pengisian.</td></tr>';
-            } else {
-                // Urutkan dari yang terbaru ke terlama
-                const sortedMyData = [...myData].sort((a,b) => new Date(b.Timestamp) - new Date(a.Timestamp));
-                
-                sortedMyData.forEach(d => {
-                    const st = d.Status;
-                    const stClass = st==='Approved' ? 'bg-green-100 text-green-700' : (st==='Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700');
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="p-3 border-b text-xs font-bold text-gray-600">${formatDate(d.Timestamp)}</td>
-                            <td class="p-3 border-b text-xs text-mining-600 font-semibold">${d['Kategori Role']}</td>
-                            <td class="p-3 border-b text-center font-bold text-accent-600">${d['Final Score (%)']}%</td>
-                            <td class="p-3 border-b text-center"><span class="${stClass} px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">${st}</span></td>
-                            <td class="p-3 border-b text-center">
-                                <button onclick='openRaport(${JSON.stringify(d).replace(/'/g, "&#39;")})' class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded font-bold text-xs transition-colors"><i class="fa-regular fa-eye"></i> Detail</button>
-                            </td>
-                        </tr>
-                    `;
-                });
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) {
+                activeTab.classList.remove('hidden');
+                activeTab.classList.remove('animate-fade-in');
+                void activeTab.offsetWidth; 
+                activeTab.classList.add('animate-fade-in');
             }
 
-            // Render Chart Pribadi
-            updatePersonalChart(myApproved);
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
+            
+            const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.getAttribute('onclick')?.includes(`'${tabId}'`));
+            if (targetBtn) {
+                targetBtn.classList.add('tab-active');
+            }
+
+            if(tabId === 'log') renderLog();
+            if(tabId === 'dashboard') renderDashboard();
+            if(tabId === 'approval') renderApprovalTable();
         }
 
-        function updatePersonalChart(myApproved) {
-            const dateMap = {};
-            // Urutkan dari terlama ke terbaru untuk grafik (Kiri ke Kanan)
-            const sortedData = [...myApproved].sort((a, b) => new Date(a.Timestamp) - new Date(b.Timestamp));
-            
-            sortedData.forEach(d => {
-                const dateStr = new Date(d.Timestamp).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
-                if(!dateMap[dateStr]) dateMap[dateStr] = { sum: 0, count: 0 };
-                dateMap[dateStr].sum += parseFloat(d['Final Score (%)']);
-                dateMap[dateStr].count++;
-            });
-
-            const labels = Object.keys(dateMap);
-            const dataPoints = labels.map(l => (dateMap[l].sum / dateMap[l].count).toFixed(1));
-
-            const ctx = document.getElementById('personalChart').getContext('2d');
-            if(personalChartInstance) personalChartInstance.destroy();
-            
-            personalChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Final Score Pribadi (%)',
-                        data: dataPoints,
-                        backgroundColor: '#1e293b', // Warna mining-600
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { 
-                        y: { beginAtZero: true, max: 105, grid: { borderDash: [5, 5] } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        //        
-        function generateFormTable() {
-            const role = document.getElementById('role-select').value;
-            const tableArea = document.getElementById('dynamic-form-area');
-            const tbody = document.getElementById('job-table-body');
+        function renderJobActivities() {
+            const role = document.getElementById('role').value;
+            const tbody = document.getElementById('jobs-tbody');
             tbody.innerHTML = '';
-            
-            if(!role) {
-                tableArea.classList.add('hidden');
+            currentJobs = [];
+
+            if (!role) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-10 text-center text-slate-500 italic font-medium">Pilih Kategori Posisi di atas untuk memuat daftar tugas...</td></tr>';
                 return;
             }
-            
-            tableArea.classList.remove('hidden');
-            const jobs = roleData[role];
-            jobs.forEach((job, index) => addJobRow(index + 1, job, false));
-            calculateScores();
-        }
 
-        function addJobRow(index, jobDesc, isCustom = false) {
-            const tbody = document.getElementById('job-table-body');
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-gray-50 transition-colors";
-            
-            const tdNo = `<td class="p-3 border-b text-center text-gray-500 font-bold">${index}</td>`;
-            const tdDesc = `<td class="p-3 border-b"><div class="font-medium text-gray-800">${jobDesc}</div>${isCustom ? '<span class="text-xs text-accent-600 font-bold bg-accent-50 px-2 rounded mt-1 inline-block">Extra Job</span>' : ''}</td>`;
-            const tdPlan = `<td class="p-3 border-b text-center"><span class="bg-gray-100 text-gray-600 px-3 py-1 rounded font-bold">100</span></td>`;
-            // Kotak Input Actual Diperjelas
-            const tdActual = `
-                <td class="p-3 border-b text-center">
-                    <input type="number" min="0" max="100" oninput="calculateScores()" class="w-20 px-2 py-2 border-2 border-blue-400 bg-blue-50 text-blue-800 font-black text-center rounded focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-inner placeholder:text-blue-300 actual-input" placeholder="0">
-                </td>
-            `;
-            const tdRemark = `
-                <td class="p-3 border-b">
-                    <input type="text" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-accent-500 remark-input" placeholder="Opsional...">
-                </td>
-            `;
-            const tdPhoto = `
-                <td class="p-3 border-b text-center">
-                    <input type="file" accept="image/*" capture="environment" class="hidden photo-input" id="photo-${index}">
-                    <label for="photo-${index}" class="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full inline-block transition-colors" title="Ambil/Unggah Foto (CCP)">
-                        <i class="fa-solid fa-camera"></i>
-                    </label>
-                    <div id="preview-${index}" class="mt-1 text-[10px] text-green-600 font-bold hidden truncate w-20 mx-auto"><i class="fa-solid fa-check"></i> OK</div>
-                </td>
-            `;
-
-            tr.innerHTML = tdNo + tdDesc + tdPlan + tdActual + tdRemark + tdPhoto;
-            tbody.appendChild(tr);
-
-            // Listener preview foto
-            const fileInput = tr.querySelector('.photo-input');
-            fileInput.addEventListener('change', function(e) {
-                if(e.target.files.length > 0) {
-                    const previewDiv = document.getElementById(`preview-${index}`);
-                    previewDiv.classList.remove('hidden');
-                    // Simpan sementara sebagai Base64 di memori browser
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        fileInput.dataset.base64 = event.target.result;
-                    };
-                    reader.readAsDataURL(e.target.files[0]);
-                }
+            const jobs = jobsByRole[role];
+            jobs.forEach((jobDesc, index) => {
+                addJobRow(index, jobDesc);
             });
         }
 
         function addCustomJob() {
-            const jobDesc = prompt("Masukkan deskripsi Job Tambahan:");
-            if(jobDesc && jobDesc.trim() !== "") {
-                const tbody = document.getElementById('job-table-body');
-                const currCount = tbody.children.length;
-                addJobRow(currCount + 1, jobDesc.trim(), true);
-                calculateScores();
+            const index = currentJobs.length;
+            addJobRow(index, "", true);
+        }
+
+        function addJobRow(index, desc, isCustom = false) {
+            const tbody = document.getElementById('jobs-tbody');
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-700/30 transition-colors";
+            
+            const descHtml = isCustom 
+                ? `<input type="text" id="job-desc-${index}" placeholder="Masukkan deskripsi job tambahan..." class="input-dark w-full px-3 py-2 text-sm border-dashed">`
+                : `<span class="text-slate-300 font-medium">${desc}</span><input type="hidden" id="job-desc-${index}" value="${desc}">`;
+
+            tr.innerHTML = `
+                <td class="px-5 py-4 align-top">${descHtml}</td>
+                <td class="px-3 py-4 align-top text-center"><span class="bg-slate-700 text-slate-300 px-2 py-1 rounded text-xs font-bold">100%</span></td>
+                <td class="px-3 py-4 align-top">
+                    <input type="number" id="job-actual-${index}" class="input-dark w-full px-2 py-2 text-center font-bold text-amber-400 text-lg" placeholder="0">
+                </td>
+                <td class="px-4 py-4 align-top">
+                    <textarea id="job-remarks-${index}" rows="2" class="input-dark w-full px-3 py-2 text-sm resize-none" placeholder="Opsional..."></textarea>
+                </td>
+                <td class="px-4 py-4 align-top">
+                    <input type="file" accept="image/*" class="text-[10px] w-full text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" onchange="processPhoto(event, ${index})">
+                    <div id="job-photo-preview-${index}" class="mt-2 text-xs font-bold text-amber-500"></div>
+                    <input type="hidden" id="job-photo-data-${index}">
+                </td>
+                <td class="px-3 py-4 align-top text-center">
+                    ${isCustom ? `<button onclick="this.closest('tr').remove()" class="text-red-400 hover:text-red-300 p-2"><i class="fas fa-trash"></i></button>` : ''}
+                </td>
+            `;
+            tbody.appendChild(tr);
+            currentJobs.push(index);
+        }
+
+        function processPhoto(event, index) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const previewDiv = document.getElementById(`job-photo-preview-${index}`);
+            const dataInput = document.getElementById(`job-photo-data-${index}`);
+            
+            previewDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+            dataInput.value = 'loading'; 
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 350; 
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const base64Str = canvas.toDataURL('image/jpeg', 0.5); 
+                    uploadToGoogleDrive(base64Str, file.name, file.type, index);
+                };
+            };
+        }
+
+        async function uploadToGoogleDrive(base64Str, fileName, mimeType, index) {
+            const previewDiv = document.getElementById(`job-photo-preview-${index}`);
+            const dataInput = document.getElementById(`job-photo-data-${index}`);
+
+            try {
+                const response = await fetch(WEB_APP_URL_DRIVE, {
+                    redirect: "follow",
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ base64: base64Str, fileName: fileName, mimeType: mimeType })
+                });
+
+                if(!response.ok) throw new Error("HTTP error " + response.status);
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    dataInput.value = result.fileUrl;
+                    previewDiv.innerHTML = `<a href="${result.fileUrl}" target="_blank" class="text-emerald-400 hover:underline"><i class="fas fa-check-circle"></i> File Sukses</a>`;
+                } else {
+                    dataInput.value = "";
+                    previewDiv.innerHTML = `<span class="text-red-400"><i class="fas fa-times-circle"></i> Gagal Upload</span>`;
+                    showToast("Gagal menyimpan foto ke Drive: " + result.message, "error");
+                }
+            } catch (error) {
+                console.error("Upload Error:", error);
+                dataInput.value = "";
+                previewDiv.innerHTML = `<span class="text-red-400"><i class="fas fa-wifi"></i> Error Jaringan</span>`;
+                showToast("Error jaringan saat upload gambar.", "error");
             }
         }
 
-        function calculateScores() {
-            // 1. Hitung Job Score Rata-rata
-            const inputs = document.querySelectorAll('.actual-input');
+        function collectData() {
+            const roleSelect = document.getElementById('role');
+            if(!roleSelect.value) return null;
+
+            let jobs = [];
             let totalActual = 0;
-            let count = 0;
-            
-            inputs.forEach(input => {
-                let val = parseFloat(input.value) || 0;
-                if(val > 100) { val = 100; input.value = 100; } // Batas 100%
-                totalActual += val;
-                count++;
-            });
+            let validJobCount = 0;
 
-            let avgJob = count > 0 ? (totalActual / count) : 0;
-            document.getElementById('avg-job-score').innerText = avgJob.toFixed(1) + "%";
-
-            // 2. Hitung Safety (Plan 4) = 10%
-            let safetyAct = parseFloat(document.getElementById('safety-actual').value) || 0;
-            let safetyPerc = (safetyAct / 4) * 100;
-            if (safetyPerc > 100) safetyPerc = 100; // Cap
-            let safetyScoreFinal = (safetyPerc / 100) * 10;
-            document.getElementById('safety-score').innerText = safetyScoreFinal.toFixed(1) + "%";
-
-            // 3. Hitung Improvement (Plan 1) = 10%
-            let impAct = parseFloat(document.getElementById('improve-actual').value) || 0;
-            let impPerc = (impAct / 1) * 100;
-            if (impPerc > 100) impPerc = 100; // Cap
-            let impScoreFinal = (impPerc / 100) * 10;
-            document.getElementById('improve-score').innerText = impScoreFinal.toFixed(1) + "%";
-
-            // 4. Final Score (Bobot Job 80%)
-            let finalScore = ((avgJob / 100) * 80) + safetyScoreFinal + impScoreFinal;
-            document.getElementById('final-total-score').innerText = finalScore.toFixed(1) + "%";
-        }
-
-        //        
-        function showPreviewModal() {
-            const role = document.getElementById('role-select').value;
-            if(!role) { showToast("Silakan pilih kategori Role terlebih dahulu.", 'error'); return; }
-
-            document.getElementById('prev-role').innerText = role;
-            document.getElementById('prev-nama').innerText = currentUser.nama;
-            document.getElementById('prev-date').innerText = new Date().toLocaleDateString('id-ID');
-            document.getElementById('prev-shift').innerText = document.querySelector('input[name="shift"]:checked').value;
-            
-            const tbodyPrev = document.getElementById('prev-job-tbody');
-            tbodyPrev.innerHTML = '';
-            
-            const rows = document.getElementById('job-table-body').children;
-            for(let i=0; i<rows.length; i++) {
-                const desc = rows[i].cells[1].innerText;
-                const act = rows[i].querySelector('.actual-input').value || 0;
-                const remark = rows[i].querySelector('.remark-input').value || '-';
+            const rows = document.getElementById('jobs-tbody').querySelectorAll('tr');
+            rows.forEach((row) => {
+                const descInput = row.querySelector('input[id^="job-desc-"], span');
+                if(!descInput) return;
                 
-                tbodyPrev.innerHTML += `
-                    <tr>
-                        <td class="border border-gray-300 p-2 text-center">${i+1}</td>
-                        <td class="border border-gray-300 p-2">${desc}</td>
-                        <td class="border border-gray-300 p-2 text-center">100%</td>
-                        <td class="border border-gray-300 p-2 text-center font-bold text-blue-600">${act}%</td>
-                        <td class="border border-gray-300 p-2 text-xs">${remark}</td>
-                    </tr>
-                `;
-            }
+                const desc = descInput.tagName === 'SPAN' ? descInput.innerText : descInput.value;
+                if(!desc.trim()) return;
 
-            document.getElementById('prev-job-score').innerText = document.getElementById('avg-job-score').innerText;
-            
-            document.getElementById('prev-safety-act').innerText = document.getElementById('safety-actual').value || 0;
-            document.getElementById('prev-safety-score').innerText = document.getElementById('safety-score').innerText;
-            
-            document.getElementById('prev-imp-act').innerText = document.getElementById('improve-actual').value || 0;
-            document.getElementById('prev-imp-score').innerText = document.getElementById('improve-score').innerText;
-
-            document.getElementById('prev-final-score').innerText = document.getElementById('final-total-score').innerText;
-
-            document.getElementById('preview-modal').classList.remove('hidden');
-            document.getElementById('preview-modal').style.display = 'flex';
-        }
-
-        async function submitWorkload() {
-            const role = document.getElementById('role-select').value;
-            if(!role) { showToast("Kategori Role wajib dipilih!", 'error'); return; }
-
-            const btn = document.getElementById('btn-submit-workload');
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah...`;
-            showLoader(true, "Memproses data dan mengunggah foto CCP ke Drive...");
-
-            try {
-                let tasks = [];
-                const rows = document.getElementById('job-table-body').children;
+                const actualInput = row.querySelector('input[id^="job-actual-"]');
+                let actual = actualInput ? parseFloat(actualInput.value) || 0 : 0;
                 
-                for(let i=0; i<rows.length; i++) {
-                    const inputPhoto = rows[i].querySelector('.photo-input');
-                    let photoUrl = "";
-                    
-                    // Jika ada foto, upload dulu ke Google Drive via GAS
-                    if(inputPhoto.dataset.base64) {
-                        showLoader(true, `Mengunggah foto ${i+1}/${rows.length}...`);
-                        const uploadRes = await fetchAppScript({
-                            action: 'uploadImage',
-                            base64: inputPhoto.dataset.base64,
-                            fileName: `CCP_${currentUser.nik}_${Date.now()}.jpg`,
-                            mimeType: 'image/jpeg'
-                        });
-                        if(uploadRes.status === "success") {
-                            photoUrl = uploadRes.url;
-                        }
-                    }
+                const remarksInput = row.querySelector('textarea[id^="job-remarks-"]');
+                const photoInput = row.querySelector('input[id^="job-photo-data-"]');
 
-                    tasks.push({
-                        desc: rows[i].cells[1].innerText,
-                        plan: 100,
-                        actual: rows[i].querySelector('.actual-input').value || 0,
-                        remark: rows[i].querySelector('.remark-input').value || '',
-                        photo: photoUrl // URL Asli GDrive, BUKAN Base64!
-                    });
+                if(photoInput && photoInput.value === 'loading') {
+                    showToast("Harap tunggu, ada foto yang sedang diupload...", "error");
+                    throw new Error("loading");
                 }
 
-                showLoader(true, "Menyimpan data workload...");
-                const payload = {
-                    id: "DOC-" + Date.now().toString().slice(-6),
-                    timestamp: new Date().toISOString(),
-                    nik: currentUser.nik,
-                    nama: currentUser.nama,
-                    jabatan: currentUser.jabatan,
-                    shift: document.querySelector('input[name="shift"]:checked').value,
-                    roleName: role,
-                    tasks: tasks,
-                    scores: {
-                        avgJobScore: parseFloat(document.getElementById('avg-job-score').innerText) || 0,
-                        safetyAct: parseFloat(document.getElementById('safety-actual').value) || 0,
-                        safetyScorePercent: parseFloat(document.getElementById('safety-score').innerText) || 0,
-                        improveAct: parseFloat(document.getElementById('improve-actual').value) || 0,
-                        improveScorePercent: parseFloat(document.getElementById('improve-score').innerText) || 0,
-                        finalScore: parseFloat(document.getElementById('final-total-score').innerText) || 0
-                    }
-                };
+                jobs.push({
+                    desc: desc,
+                    actual: actual,
+                    remarks: remarksInput ? remarksInput.value : "",
+                    photo: photoInput ? photoInput.value : ""
+                });
+                totalActual += actual;
+                validJobCount++;
+            });
 
-                const res = await fetchAppScript({ action: 'submitWorkload', payload: payload });
-                
-                showToast("Data berhasil disimpan & masuk antrean Approval!");
-                document.getElementById('role-select').value = '';
-                document.getElementById('dynamic-form-area').classList.add('hidden');
-                
-                // Refresh Data Global
-                refreshDataFromServer();
-                switchView('logs');
+            const sfActual = parseFloat(document.getElementById('safety-actual').value) || 0;
+            const imActual = parseFloat(document.getElementById('improve-actual').value) || 0;
 
-            } catch(e) {
-                showToast(e.message, 'error');
-            } finally {
-                showLoader(false);
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Submit Data`;
+            let avgWorkloadAchv = validJobCount > 0 ? (totalActual / validJobCount) : 0;
+            let workloadScore = avgWorkloadAchv * 0.8; 
+
+            let safetyScore = (sfActual / 4) * 10; 
+            let safetyAchv = safetyScore * 10; 
+
+            let improveScore = (imActual / 1) * 10; 
+            let improveAchv = improveScore * 10; 
+
+            let totalScore = workloadScore + safetyScore + improveScore;
+            let gradeInfo = getGrade(totalScore);
+
+            return {
+                id: document.getElementById('form-id').value,
+                date: document.getElementById('date').value,
+                name: document.getElementById('name').value,
+                shift: document.getElementById('shift').value,
+                role: roleSelect.value,
+                roleText: roleSelect.options[roleSelect.selectedIndex].text,
+                jobs: jobs,
+                stats: { avgWorkloadAchv, safetyAchv, improveAchv, totalScore, gradeInfo },
+                safetyRaw: sfActual,
+                improveRaw: imActual
+            };
+        }
+
+        function getGrade(score) {
+            if(score >= 105) return {grade: 'IS', color: 'bg-blue-600 text-white', desc: 'Istimewa'};
+            if(score > 100 && score < 105) return {grade: 'BS', color: 'bg-emerald-700 text-white', desc: 'Baik Sekali'};
+            if(score >= 85 && score <= 100) return {grade: 'B', color: 'bg-emerald-400 text-slate-950', desc: 'Baik'};
+            if(score >= 70 && score < 85) return {grade: 'C', color: 'bg-amber-400 text-slate-950', desc: 'Cukup'};
+            return {grade: 'K', color: 'bg-red-600 text-white', desc: 'Kurang'};
+        }
+
+        function saveDraft() {
+            try {
+                let data = collectData();
+                if(!data) return showToast("Pilih kategori posisi terlebih dahulu!", "error");
+                data.status = "Draft";
+                data.timestamp = new Date().toLocaleString('id-ID');
+                
+                let existingIndex = logsData.findIndex(log => log.id === data.id);
+                if(existingIndex >= 0) { logsData[existingIndex] = data; } 
+                else { logsData.push(data); }
+                
+                localStorage.setItem('storemanLogs', JSON.stringify(logsData));
+                showToast("Draft berhasil diamankan di penyimpanan lokal.", "success");
+                switchTab('log');
+            } catch(e) { if(e.message !== "loading") console.error(e); }
+        }
+
+        function previewData() {
+            try {
+                let data = collectData();
+                if(!data) return showToast("Pilih kategori posisi terlebih dahulu!", "error");
+                renderPreviewData(data, "Draft", true);
+            } catch(e) { if(e.message !== "loading") console.error(e); }
+        }
+
+        async function submitFinal() {
+            try {
+                let data = collectData();
+                data.status = "Submitted";
+                data.timestamp = new Date().toLocaleString('id-ID');
+                data.staffName = "-";
+                
+                let existingIndex = logsData.findIndex(log => log.id === data.id);
+                if(existingIndex >= 0) { logsData[existingIndex] = data; } 
+                else { logsData.push(data); }
+                
+                localStorage.setItem('storemanLogs', JSON.stringify(logsData));
+                closeModal();
+                showToast("Mengunggah data ke Server Pusat...", "info");
+                
+                document.getElementById('form-id').value = "ID-" + new Date().getTime();
+                document.getElementById('jobs-tbody').innerHTML = '<tr><td colspan="6" class="px-5 py-10 text-center text-slate-500 italic font-medium">Form di-reset. Pilih kategori posisi...</td></tr>';
+                document.getElementById('role').value = "";
+                document.getElementById('safety-actual').value = "";
+                document.getElementById('improve-actual').value = "";
+                
+                switchTab('log');
+                await sendToGoogleSheets(data);
+                await syncDataFromServer();
+
+            } catch(e) { if(e.message !== "loading") console.error(e); }
+        }
+
+        async function sendToGoogleSheets(data) {
+            try {
+                const response = await fetch(WEB_APP_URL_SHEETS, {
+                    redirect: "follow",
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(data)
+                });
+                if(!response.ok) throw new Error("HTTP error");
+                
+                const result = await response.json();
+                if(result.status === 'success') {
+                    showToast("Sinkronisasi Server Sukses!", "success");
+                } else {
+                    showToast("Gagal sinkron: " + result.message, "error");
+                }
+            } catch (error) {
+                console.error("Sheets Error:", error);
+                showToast("Data tersimpan lokal, tapi gagal ke Server. Cek internet Anda.", "error");
             }
         }
 
-        //        
-        function renderLogs() {
-            const tbody = document.getElementById('logs-table-body');
+        function renderLog() {
+            const tbody = document.getElementById('log-tbody');
             tbody.innerHTML = '';
             
-            if(serverData.length === 0) {
-                document.getElementById('logs-empty').classList.remove('hidden');
+            const searchText = (document.getElementById('log-search')?.value || "").toLowerCase();
+            const statusFilter = document.getElementById('log-filter-status')?.value || "all";
+
+            const isStaff = currentUser?.role.toUpperCase().includes('STAFF');
+            let visibleLogs = isStaff ? logsData : logsData.filter(log => log.name === currentUser?.name);
+
+            visibleLogs = visibleLogs.filter(log => {
+                const matchSearch = log.name.toLowerCase().includes(searchText) || log.roleText.toLowerCase().includes(searchText);
+                const matchStatus = statusFilter === 'all' || log.status === statusFilter;
+                return matchSearch && matchStatus;
+            }).reverse();
+
+            if(visibleLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-5 py-10 text-center text-slate-500 italic font-medium">Belum ada rekam jejak aktivitas operasional yang ditemukan.</td></tr>';
                 return;
             }
-            
-            document.getElementById('logs-empty').classList.add('hidden');
-            
-            serverData.forEach(d => {
-                const st = d.Status;
-                const stClass = st==='Approved' ? 'bg-green-100 text-green-700' : (st==='Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700');
+
+            visibleLogs.forEach((log) => {
+                let badgeColor = log.status === 'Draft' ? 'bg-amber-600' : log.status === 'Submitted' ? 'bg-blue-600' : log.status === 'Approved' ? 'bg-emerald-600' : 'bg-red-600';
+                let statusLabel = log.status === 'Submitted' ? 'Pending Approved' : log.status;
                 
+                let actBtn = `<button onclick="previewFromLog('${log.id}')" class="text-blue-400 hover:text-blue-300 mr-4 transition" title="Lihat Raport"><i class="fas fa-eye fa-lg"></i></button>`;
+                if(log.status === 'Draft' && !isStaff) {
+                    actBtn += `<button onclick="continueDraft('${log.id}')" class="text-amber-400 hover:text-amber-300 font-bold text-xs bg-amber-500/10 px-2 py-1 rounded border border-amber-500/30"><i class="fas fa-play mr-1"></i> Lanjutkan</button>`;
+                }
+
                 tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-3 border-b">
-                            <button onclick='openRaport(${JSON.stringify(d).replace(/'/g, "&#39;")})' class="bg-mining-100 hover:bg-mining-200 text-mining-700 px-3 py-1 rounded text-xs font-bold transition-colors"><i class="fa-regular fa-file-pdf mr-1"></i> Buka Raport</button>
-                        </td>
-                        <td class="p-3 border-b">${formatDate(d.Timestamp)}</td>
-                        <td class="p-3 border-b font-bold">${d.Nama}</td>
-                        <td class="p-3 border-b text-xs">${d.Jabatan}</td>
-                        <td class="p-3 border-b text-xs text-gray-500">${d['Kategori Role']}</td>
-                        <td class="p-3 border-b text-center font-bold text-accent-600">${d['Final Score (%)']}%</td>
-                        <td class="p-3 border-b text-center"><span class="${stClass} px-2 py-1 rounded text-xs font-bold">${st}</span></td>
-                        <td class="p-3 border-b text-xs text-gray-500">${d.Approver || '-'}</td>
+                    <tr class="hover:bg-slate-700/50 transition-colors">
+                        <td class="px-5 py-4"><div class="font-bold text-white tracking-wide">${log.date}</div><div class="text-xs text-slate-400 mt-1">Shift ${log.shift}</div></td>
+                        <td class="px-5 py-4 text-slate-300 font-medium">${log.name}</td>
+                        <td class="px-5 py-4"><div class="text-sm text-slate-300 font-medium">${log.roleText}</div></td>
+                        <td class="px-5 py-4 text-center font-extrabold text-white text-lg">${log.stats.totalScore.toFixed(2)}%</td>
+                        <td class="px-5 py-4 text-center"><span class="${log.stats.gradeInfo.color} px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg uppercase">${log.stats.gradeInfo.grade}</span></td>
+                        <td class="px-5 py-4 text-center"><span class="${badgeColor} text-white px-3 py-1 rounded-md text-xs font-bold shadow tracking-wide uppercase">${statusLabel}</span></td>
+                        <td class="px-5 py-4 text-center">${actBtn}</td>
                     </tr>
                 `;
             });
         }
 
-        function renderApproval() {
-            const tbody = document.getElementById('approval-table-body');
-            tbody.innerHTML = '';
-            let pendingCount = 0;
+        function continueDraft(id) {
+            const data = logsData.find(l => l.id === id);
+            if(!data) return;
+
+            document.getElementById('form-id').value = data.id;
+            document.getElementById('date').value = data.date;
+            document.getElementById('shift').value = data.shift;
+            document.getElementById('role').value = data.role;
             
-            serverData.forEach(d => {
-                if(d.Status === 'Pending') {
-                    pendingCount++;
-                    tbody.innerHTML += `
-                        <tr class="bg-white hover:bg-gray-50 transition-colors">
-                            <td class="p-4 border-b">
-                                <p class="font-bold text-mining-700 text-base">${d.Nama}</p>
-                                <p class="text-xs text-gray-500">NIK: ${d.NIK} | ${d.Jabatan}</p>
-                            </td>
-                            <td class="p-4 border-b text-sm text-gray-600">
-                                <i class="fa-regular fa-clock mr-1"></i>${formatDate(d.Timestamp)}
-                                <span class="block text-xs font-bold mt-1 text-mining-500">Shift: ${d.Shift || 'DS'}</span>
-                            </td>
-                            <td class="p-4 border-b text-sm">
-                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold border border-blue-200">${d['Kategori Role']}</span>
-                            </td>
-                            <td class="p-4 border-b text-center">
-                                <h3 class="text-2xl font-black text-accent-600 drop-shadow-sm">${d['Final Score (%)']}%</h3>
-                            </td>
-                            <td class="p-4 border-b text-right space-x-2">
-                                <button onclick='openRaport(${JSON.stringify(d).replace(/'/g, "&#39;")})' class="bg-mining-100 hover:bg-mining-200 text-mining-700 px-3 py-2 rounded font-bold text-sm transition-colors shadow-sm"><i class="fa-regular fa-eye"></i> Cek Dokumen</button>
-                                <button onclick="showActionModal('${d.ID}', 'Approve')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded font-bold text-sm transition-colors shadow-sm"><i class="fa-solid fa-check"></i> Setujui</button>
-                                <button onclick="showActionModal('${d.ID}', 'Reject')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded font-bold text-sm transition-colors shadow-sm"><i class="fa-solid fa-xmark"></i> Tolak</button>
-                            </td>
-                        </tr>
-                    `;
-                }
+            document.getElementById('safety-actual').value = data.safetyRaw || "";
+            document.getElementById('improve-actual').value = data.improveRaw || "";
+
+            const tbody = document.getElementById('jobs-tbody');
+            tbody.innerHTML = '';
+            currentJobs = [];
+            
+            data.jobs.forEach((job, index) => {
+                const isCustom = !jobsByRole[data.role].includes(job.desc);
+                addJobRow(index, job.desc, isCustom);
+                
+                setTimeout(() => {
+                    if(isCustom) document.getElementById(`job-desc-${index}`).value = job.desc;
+                    document.getElementById(`job-actual-${index}`).value = job.actual;
+                    document.getElementById(`job-remarks-${index}`).value = job.remarks;
+                    if(job.photo) {
+                        document.getElementById(`job-photo-data-${index}`).value = job.photo;
+                        document.getElementById(`job-photo-preview-${index}`).innerHTML = `<a href="${job.photo}" target="_blank" class="text-emerald-400 text-xs hover:underline"><i class="fas fa-check-circle"></i> File Sukses</a>`;
+                    }
+                }, 50);
             });
 
-            if(pendingCount === 0) {
-                document.getElementById('approval-empty').classList.remove('hidden');
-            } else {
-                document.getElementById('approval-empty').classList.add('hidden');
-            }
-            
-            const badge = document.getElementById('badge-approval');
-            badge.innerText = pendingCount;
-            if(pendingCount > 0) badge.classList.remove('hidden');
-            else badge.classList.add('hidden');
+            switchTab('input');
         }
 
-        //        
-        function showActionModal(id, type) {
-            document.getElementById('action-doc-id').value = id;
-            document.getElementById('action-type').value = type;
-            document.getElementById('action-title').innerText = type === 'Approve' ? 'Setujui Workload' : 'Tolak Workload';
-            document.getElementById('action-comment').value = '';
-            
-            document.getElementById('action-modal').classList.remove('hidden');
-            document.getElementById('action-modal').style.display = 'flex';
+        function previewFromLog(id) {
+            const data = logsData.find(l => l.id === id);
+            if(data) renderPreviewData(data, null, false);
         }
 
-        async function submitApprovalAction() {
-            const id = document.getElementById('action-doc-id').value;
-            const type = document.getElementById('action-type').value;
-            const comment = document.getElementById('action-comment').value;
-
-            if(type === 'Reject' && comment.trim() === '') {
-                showToast("Wajib mengisi alasan/komentar jika menolak!", 'error');
-                return;
-            }
-
-            const btn = document.getElementById('btn-confirm-action');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Proses...`;
-            btn.disabled = true;
-
-            try {
-                const payload = {
-                    id: id,
-                    status: type === 'Approve' ? 'Approved' : 'Rejected',
-                    approverName: currentUser.nama,
-                    comment: comment || '-'
-                };
-
-                const res = await fetchAppScript({ action: 'updateApproval', payload: payload });
-                showToast(res.message);
-                
-                document.getElementById('action-modal').classList.add('hidden');
-                refreshDataFromServer();
-
-            } catch(e) {
-                showToast(e.message, 'error');
-            } finally {
-                btn.innerHTML = `Konfirmasi`;
-                btn.disabled = false;
-            }
-        }
-
-        function openRaport(data) {
-            document.getElementById('rap-id').innerText = data.ID;
-            document.getElementById('rap-nama').innerText = data.Nama;
-            document.getElementById('rap-nik').innerText = data.NIK;
-            document.getElementById('rap-jabatan').innerText = data.Jabatan;
-            document.getElementById('rap-role').innerText = data['Kategori Role'];
-            document.getElementById('rap-date').innerText = formatDate(data.Timestamp);
-            document.getElementById('rap-shift').innerText = data.Shift || '-';
+        function renderPreviewData(data, statusOverride = null, showSubmit = false) {
+            const status = statusOverride || data.status;
+            let statusLabel = status === 'Submitted' ? 'Pending Approved' : status;
             
-            const badge = document.getElementById('rap-status-badge');
-            badge.innerText = data.Status;
-            badge.className = `px-3 py-1 rounded font-bold text-sm text-white shadow-inner ${data.Status === 'Approved' ? 'bg-green-500' : (data.Status === 'Rejected' ? 'bg-red-500' : 'bg-amber-500')}`;
+            document.getElementById('prev-name').innerText = data.name;
+            document.getElementById('prev-date').innerText = data.date;
+            document.getElementById('prev-role').innerText = data.roleText;
+            document.getElementById('prev-shift').innerText = data.shift;
+            document.getElementById('prev-staff').innerText = data.staffName && data.staffName !== "-" ? data.staffName : "Menunggu Approval";
             
-            document.getElementById('rap-approver').innerText = `Direview: ${data.Approver || 'Belum'}`;
-            document.getElementById('rap-final-score').innerText = data['Final Score (%)'] + "%";
-            document.getElementById('rap-job-score').innerText = data['Rata-rata Job (%)'] + "%";
+            const statBadge = document.getElementById('prev-status');
+            statBadge.innerText = statusLabel;
+            statBadge.className = `font-bold px-3 py-1 rounded-md text-xs text-white uppercase shadow-sm ${status === 'Draft' ? 'bg-amber-600' : status === 'Submitted' ? 'bg-blue-600' : status === 'Approved' ? 'bg-emerald-600' : 'bg-red-600'}`;
 
-            // Safety & Imp
-            document.getElementById('rap-safety-act').innerText = "-"; // Default
-            document.getElementById('rap-imp-act').innerText = "-";
-            document.getElementById('rap-safety-score').innerText = data['Safety (%)'] + "%";
-            document.getElementById('rap-imp-score').innerText = data['Improvement (%)'] + "%";
-
-            const tbody = document.getElementById('rap-job-tbody');
+            const tbody = document.getElementById('prev-jobs-tbody');
             tbody.innerHTML = '';
-            
-            const gallery = document.getElementById('rap-gallery');
-            gallery.innerHTML = '';
-            let photoCount = 0;
+            data.jobs.forEach(job => {
+                let pLink = job.photo ? `<a href="${job.photo}" target="_blank" class="text-blue-400 hover:text-blue-300"><i class="fas fa-image fa-lg"></i></a>` : '<span class="text-slate-600">-</span>';
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                        <td class="p-3 text-slate-300 font-medium leading-relaxed">${job.desc} ${job.staffComment ? `<div class="mt-1 text-pink-400 text-[11px] bg-pink-900/20 px-2 py-1 rounded inline-block"><i class="fas fa-comment-dots mr-1"></i> Staff: ${job.staffComment}</div>` : ''}</td>
+                        <td class="p-3 text-center text-slate-500 font-bold">100%</td>
+                        <td class="p-3 text-center font-extrabold text-amber-400 text-base">${job.actual}%</td>
+                        <td class="p-3 text-slate-400 italic text-[11px]">${job.remarks || '-'}</td>
+                        <td class="p-3 text-center">${pLink}</td>
+                    </tr>`;
+            });
 
-            if(data.tasks && Array.isArray(data.tasks)) {
-                data.tasks.forEach((t, i) => {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50">
-                            <td class="p-3 border-b border-r text-center font-bold text-gray-500">${i+1}</td>
-                            <td class="p-3 border-b border-r">${t.desc}</td>
-                            <td class="p-3 border-b border-r text-center text-gray-500">100%</td>
-                            <td class="p-3 border-b border-r text-center font-black text-mining-600">${t.actual}%</td>
-                            <td class="p-3 border-b text-xs text-gray-600">${t.remark || '-'}</td>
-                        </tr>
-                    `;
-                    // Load gambar dari Google Drive
-                    if(t.photo) {
-                        photoCount++;
-                        gallery.innerHTML += `
-                            <a href="${t.photo}" target="_blank" class="block aspect-square bg-white border-2 border-gray-200 rounded overflow-hidden hover:border-accent-500 transition-colors relative group">
-                                <img src="${t.photo}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400?text=Gambar+Drive\\n(Klik+untuk+Buka)'">
-                                <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white"><i class="fa-solid fa-up-right-from-square"></i></div>
-                            </a>
-                        `;
-                    }
+            document.getElementById('prev-wl-achv').innerText = data.stats.avgWorkloadAchv.toFixed(2) + "%";
+            document.getElementById('prev-sf-achv').innerText = data.stats.safetyAchv.toFixed(2) + "%";
+            document.getElementById('prev-im-achv').innerText = data.stats.improveAchv.toFixed(2) + "%";
+            
+            document.getElementById('prev-total-score').innerText = data.stats.totalScore.toFixed(2) + "%";
+            
+            const badge = document.getElementById('prev-grade-badge');
+            badge.innerText = "GRADE " + data.stats.gradeInfo.grade;
+            badge.className = `px-8 py-2.5 rounded-full font-extrabold text-lg shadow-2xl tracking-wide uppercase ${data.stats.gradeInfo.color}`;
+            document.getElementById('prev-grade-desc').innerText = data.stats.gradeInfo.desc;
+
+            document.getElementById('btn-submit-final').style.display = showSubmit ? 'flex' : 'none';
+            document.getElementById('modal-preview').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-preview').classList.add('hidden');
+        }
+
+        function downloadAsJPG() {
+            const scrollArea = document.getElementById('preview-scroll-area');
+            const captureArea = document.getElementById('capture-area');
+            
+            const originalMaxHeight = scrollArea.style.maxHeight;
+            const originalOverflow = scrollArea.style.overflow;
+            
+            scrollArea.style.maxHeight = 'none';
+            scrollArea.style.overflow = 'visible';
+
+            showToast("Merender Gambar Kualitas Tinggi...", "info");
+
+            setTimeout(() => {
+                html2canvas(captureArea, {
+                    scale: 2, 
+                    useCORS: true, 
+                    backgroundColor: "#0f172a", 
+                    windowHeight: captureArea.scrollHeight, 
+                    scrollY: -window.scrollY
+                }).then(canvas => {
+                    scrollArea.style.maxHeight = originalMaxHeight;
+                    scrollArea.style.overflow = originalOverflow;
+
+                    const link = document.createElement('a');
+                    link.download = `Raport_${document.getElementById('prev-name').innerText}_${document.getElementById('prev-date').innerText}.jpg`;
+                    link.href = canvas.toDataURL('image/jpeg', 0.9);
+                    link.click();
+                    showToast("Dokumen Raport berhasil diunduh!", "success");
+                }).catch(err => {
+                    scrollArea.style.maxHeight = originalMaxHeight;
+                    scrollArea.style.overflow = originalOverflow;
+                    showToast("Gagal merender gambar.", "error");
+                });
+            }, 250);
+        }
+
+        function getMonthWeek(dateStr) {
+            let d = new Date(dateStr);
+            if(isNaN(d)) return { month: 0, week: 0 };
+            
+            let month = d.getMonth() + 1;
+            let firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+            let firstDayDay = firstDay.getDay() === 0 ? 7 : firstDay.getDay(); 
+            let date = d.getDate();
+            
+            let adjDate = date + firstDayDay - 1;
+            let week = Math.ceil(adjDate / 7);
+            if(week > 5) week = 5; 
+            
+            return { month, week };
+        }
+
+        function renderDashboard() {
+            const mFilter = document.getElementById('dash-filter-month').value;
+            const wFilter = document.getElementById('dash-filter-week').value;
+
+            let filteredLogs = logsData.filter(log => log.status === 'Approved' || log.status === 'Submitted');
+
+            filteredLogs = filteredLogs.filter(log => {
+                let mw = getMonthWeek(log.date);
+                let mMatch = mFilter === 'all' || mw.month.toString() === mFilter;
+                let wMatch = wFilter === 'all' || mw.week.toString() === wFilter;
+                return mMatch && wMatch;
+            });
+
+            let sumScore = 0;
+            let gradeCounts = {};
+            let userStats = {};
+
+            filteredLogs.forEach(log => {
+                sumScore += log.stats.totalScore;
+                let grade = log.stats.gradeInfo.grade;
+                gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
+
+                if(!userStats[log.name]) {
+                    userStats[log.name] = { totalScore: 0, count: 0 };
+                }
+                userStats[log.name].totalScore += log.stats.totalScore;
+                userStats[log.name].count += 1;
+            });
+
+            const totalSubmit = filteredLogs.length;
+            const avgScore = totalSubmit > 0 ? (sumScore / totalSubmit) : 0;
+            
+            let topGrade = "-";
+            let maxCount = 0;
+            for (let g in gradeCounts) {
+                if(gradeCounts[g] > maxCount) { maxCount = gradeCounts[g]; topGrade = g; }
+            }
+
+            document.getElementById('dash-total-submit').innerText = totalSubmit;
+            document.getElementById('dash-avg-score').innerText = avgScore.toFixed(2) + "%";
+            document.getElementById('dash-top-grade').innerText = topGrade;
+
+            let leaderArray = [];
+            for (let user in userStats) {
+                leaderArray.push({
+                    name: user,
+                    count: userStats[user].count,
+                    avg: userStats[user].totalScore / userStats[user].count
                 });
             }
+            leaderArray.sort((a,b) => b.avg - a.avg);
 
-            if(photoCount === 0) {
-                gallery.innerHTML = `<p class="col-span-4 text-center py-4 text-gray-400 text-sm">Tidak ada lampiran foto CCP.</p>`;
+            const lbBody = document.getElementById('dash-leaderboard-body');
+            lbBody.innerHTML = '';
+            if(leaderArray.length === 0) {
+                lbBody.innerHTML = '<tr><td colspan="4" class="px-5 py-8 text-center text-slate-500 italic font-medium">Tidak ada data operasional untuk rentang waktu ini.</td></tr>';
+            } else {
+                leaderArray.forEach((u, i) => {
+                    let medal = i === 0 ? '<i class="fas fa-medal text-amber-400 text-xl"></i> 1' : i === 1 ? '<i class="fas fa-medal text-slate-300 text-xl"></i> 2' : i === 2 ? '<i class="fas fa-medal text-orange-700 text-xl"></i> 3' : (i+1);
+                    lbBody.innerHTML += `
+                        <tr class="hover:bg-slate-700/50 transition-colors">
+                            <td class="px-5 py-4 font-bold text-slate-300">${medal}</td>
+                            <td class="px-5 py-4 font-bold text-white tracking-wide">${u.name}</td>
+                            <td class="px-5 py-4 text-slate-300 text-center"><span class="bg-slate-700 px-3 py-1 rounded font-medium">${u.count} Doc</span></td>
+                            <td class="px-5 py-4 font-extrabold text-amber-400 text-center text-lg">${u.avg.toFixed(2)}%</td>
+                        </tr>
+                    `;
+                });
             }
-
-            document.getElementById('rap-sign-nama').innerText = data.Nama;
-            document.getElementById('rap-sign-jabatan').innerText = data.Jabatan;
-            document.getElementById('rap-sign-approver').innerText = data.Approver !== '-' ? data.Approver : '(............................)';
-            document.getElementById('rap-sign-comment').innerText = data.Komentar !== '-' ? `"${data.Komentar}"` : 'Tanda Tangan';
-
-            document.getElementById('raport-modal').classList.remove('hidden');
-            document.getElementById('raport-modal').style.display = 'flex';
         }
 
-        //        // Fungsi untuk mengambil screenshot tanpa terpotong (Hidden Clone Method)
-        function downloadScreenshot(elementId, fileNamePrefix) {
-            const originalElement = document.getElementById(elementId);
-            if (!originalElement) return;
+        function renderApprovalTable() {
+            if(!currentUser || !currentUser.role.toUpperCase().includes('STAFF')) return;
 
-            showToast("Mempersiapkan gambar... Mohon tunggu sebentar", 'info');
-
-            // 1. Buat kloning dari elemen yang mau di-screenshot
-            const clone = originalElement.cloneNode(true);
+            const tbody = document.getElementById('approval-tbody');
+            tbody.innerHTML = '';
             
-            // 2. Beri styling absolute/fixed agar dirender full oleh browser (keluar dari modal scroll)
-            clone.style.position = "absolute";
-            clone.style.top = "0";
-            clone.style.left = "0";
-            clone.style.width = originalElement.scrollWidth + "px"; // Lebar penuh
-            clone.style.height = originalElement.scrollHeight + "px"; // Tinggi penuh (krusial)
-            clone.style.zIndex = "-9999"; // Sembunyikan di belakang
-            clone.style.margin = "0"; 
-            clone.style.overflow = "visible";
-            
-            // 3. Masukkan kloningan ke Body (luar modal)
-            document.body.appendChild(clone);
+            const pendingLogs = logsData.filter(log => log.status === 'Submitted').reverse();
+            if(pendingLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-10 text-center text-slate-500 italic font-medium">Clear! Tidak ada dokumen yang menunggu antrean validasi.</td></tr>';
+                return;
+            }
 
-            // 4. Render kloningan menggunakan HTML2Canvas
-            html2canvas(clone, { 
-                scale: 2, 
-                useCORS: true, 
-                logging: false,
-                width: clone.scrollWidth,
-                height: clone.scrollHeight,
-                windowWidth: clone.scrollWidth,
-                windowHeight: clone.scrollHeight
-            }).then(canvas => {
-                // 5. Unduh hasil render
-                const link = document.createElement('a');
-                link.download = `${fileNamePrefix}_${Date.now()}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.9);
-                link.click();
-                showToast("Gambar berhasil disimpan!", 'success');
-            }).catch(err => {
-                console.error("Gagal menyimpan gambar:", err);
-                showToast("Gagal merender gambar.", 'error');
-            }).finally(() => {
-                // 6. Hapus kloningan dari body agar tidak menyampah
-                document.body.removeChild(clone);
+            pendingLogs.forEach((log) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-700/50 transition-colors">
+                        <td class="px-5 py-4"><div class="font-bold text-white">${log.date}</div><div class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">${log.timestamp}</div></td>
+                        <td class="px-5 py-4 font-bold text-amber-400">${log.name}</td>
+                        <td class="px-5 py-4 text-sm text-slate-300 font-medium">${log.roleText}</td>
+                        <td class="px-5 py-4 text-center font-extrabold text-white text-lg">${log.stats.totalScore.toFixed(2)}%</td>
+                        <td class="px-5 py-4 text-center"><span class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs font-bold uppercase shadow-sm">Pending</span></td>
+                        <td class="px-5 py-4 text-center">
+                            <button onclick="openReviewModal('${log.id}')" class="bg-pink-600 hover:bg-pink-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow border border-pink-500"><i class="fas fa-edit mr-1"></i> Review</button>
+                        </td>
+                    </tr>
+                `;
             });
         }
 
-        // Ikat fungsi ke tombol
-        document.getElementById('btn-dl-raport').onclick = () => {
-            downloadScreenshot('raport-content-area', 'Raport_Workload');
-        };
+        function openReviewModal(id) {
+            const index = logsData.findIndex(l => l.id === id);
+            if(index < 0) return;
+            const data = logsData[index];
 
+            document.getElementById('rev-log-index').value = index;
+            document.getElementById('rev-name').innerText = data.name;
+            document.getElementById('rev-role').innerText = data.roleText;
+            document.getElementById('rev-score').innerText = data.stats.totalScore.toFixed(2) + "%";
+            document.getElementById('rev-staff-name').value = currentUser.name;
+
+            const tbody = document.getElementById('rev-jobs-tbody');
+            tbody.innerHTML = '';
+            data.jobs.forEach((job, jIdx) => {
+                let photoPreview = job.photo ? `<div class="mt-2"><a href="${job.photo}" target="_blank" class="inline-flex items-center gap-1.5 text-xs bg-blue-600/30 text-blue-300 hover:bg-blue-600/50 px-2.5 py-1 rounded border border-blue-500/40"><i class="fas fa-external-link-alt"></i> Lihat Dokumentasi</a></div>` : '<div class="mt-1 text-[11px] text-slate-500 italic">Tanpa foto</div>';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-700/30 transition-colors">
+                        <td class="p-4 text-slate-300 font-medium align-top leading-relaxed">
+                            <div>${job.desc}</div>
+                            ${photoPreview}
+                        </td>
+                        <td class="p-4 text-center text-slate-500 font-bold align-top">100%</td>
+                        <td class="p-4 align-top border-r border-slate-700/50">
+                            <div class="text-sm font-extrabold text-amber-400 mb-1">Input Storeman: ${job.actual}%</div>
+                            <div class="text-xs text-slate-500 italic">${job.remarks || 'Tanpa keterangan'}</div>
+                        </td>
+                        <td class="p-4 align-top bg-pink-900/10">
+                            <input type="number" id="rev-actual-${jIdx}" value="${job.actual}" class="input-dark w-full px-2 py-2 text-center font-extrabold text-pink-400 text-lg border-pink-500/30">
+                        </td>
+                        <td class="p-4 align-top bg-pink-900/10">
+                            <input type="text" id="rev-comment-${jIdx}" value="${job.staffComment || ''}" class="input-dark w-full px-3 py-2 text-sm border-pink-500/30" placeholder="Feedback...">
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('modal-review').classList.remove('hidden');
+        }
+
+        function closeReviewModal() {
+            document.getElementById('modal-review').classList.add('hidden');
+        }
+
+        async function processApproval(newStatus) {
+            const idx = document.getElementById('rev-log-index').value;
+            const staffName = document.getElementById('rev-staff-name').value || "Staff Anonymous";
+            let data = logsData[idx];
+
+            let totalActual = 0;
+            let validJobCount = data.jobs.length;
+
+            data.jobs.forEach((job, jIdx) => {
+                const newAct = parseFloat(document.getElementById(`rev-actual-${jIdx}`).value) || 0;
+                const newComment = document.getElementById(`rev-comment-${jIdx}`).value;
+                job.actual = newAct;
+                job.staffComment = newComment;
+                totalActual += newAct;
+            });
+
+            let avgWorkloadAchv = validJobCount > 0 ? (totalActual / validJobCount) : 0;
+            let workloadScore = avgWorkloadAchv * 0.8;
+            let safetyScore = (data.safetyRaw / 4) * 10;
+            let improveScore = (data.improveRaw / 1) * 10;
+            
+            data.stats.avgWorkloadAchv = avgWorkloadAchv;
+            data.stats.totalScore = workloadScore + safetyScore + improveScore;
+            data.stats.gradeInfo = getGrade(data.stats.totalScore);
+            
+            data.status = newStatus;
+            data.staffName = staffName;
+
+            logsData[idx] = data;
+            localStorage.setItem('storemanLogs', JSON.stringify(logsData));
+            
+            closeReviewModal();
+            showToast(`Status dokumen diubah menjadi ${newStatus}! Sinkronisasi ke server...`, 'success');
+            renderApprovalTable();
+            renderLog();
+            renderDashboard();
+
+            await sendToGoogleSheets(data);
+            await syncDataFromServer();
+        }
     </script>
 </body>
 </html>
