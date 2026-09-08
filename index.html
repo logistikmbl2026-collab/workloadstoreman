@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -180,19 +181,32 @@
                         </div>
                     </div>
 
-                    <h3 class="text-lg font-bold text-amber-400 mb-4 border-b border-slate-700/50 pb-2 uppercase tracking-wide">Papan Peringkat (Leaderboard Seluruh Storeman)</h3>
-                    <div class="overflow-x-auto rounded-lg border border-slate-700/50">
-                        <table class="min-w-full text-sm text-left">
-                            <thead class="text-xs uppercase bg-slate-900/80 text-slate-400 border-b border-slate-700/50">
-                                <tr>
-                                    <th class="px-5 py-4 font-bold">Peringkat</th>
-                                    <th class="px-5 py-4 font-bold">Nama Storeman</th>
-                                    <th class="px-5 py-4 font-bold text-center">Total Dokumen</th>
-                                    <th class="px-5 py-4 font-bold text-center">Rata-rata Score</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dash-leaderboard-body" class="divide-y divide-slate-700/50 bg-slate-800/40"></tbody>
-                        </table>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Chart Container -->
+                        <div class="bg-slate-800/60 rounded-xl p-5 border border-slate-700/50 shadow-inner">
+                            <h3 class="text-lg font-bold text-blue-400 mb-4 border-b border-slate-700/50 pb-2 uppercase tracking-wide"><i class="fas fa-chart-bar mr-2"></i>Distribusi Posisi</h3>
+                            <div class="relative h-64 w-full">
+                                <canvas id="roleChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Leaderboard Container -->
+                        <div class="bg-slate-800/60 rounded-xl p-5 border border-slate-700/50 shadow-inner">
+                            <h3 class="text-lg font-bold text-amber-400 mb-4 border-b border-slate-700/50 pb-2 uppercase tracking-wide"><i class="fas fa-trophy mr-2"></i>Papan Peringkat</h3>
+                            <div class="overflow-x-auto rounded-lg border border-slate-700/50">
+                                <table class="min-w-full text-sm text-left">
+                                    <thead class="text-xs uppercase bg-slate-900/80 text-slate-400 border-b border-slate-700/50">
+                                        <tr>
+                                            <th class="px-4 py-3 font-bold">Peringkat</th>
+                                            <th class="px-4 py-3 font-bold">Nama Storeman</th>
+                                            <th class="px-4 py-3 font-bold text-center">Total Dok.</th>
+                                            <th class="px-4 py-3 font-bold text-center">Skor Rata-rata</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dash-leaderboard-body" class="divide-y divide-slate-700/50 bg-slate-800/40"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -946,20 +960,26 @@
             return { grade: 'K', color: 'bg-red-600 text-white', desc: 'Kurang' };
         }
 
-        function saveDraft() {
+        async function saveDraft() {
             try {
                 let data = collectData();
                 if(!data) return showToast("Pilih kategori posisi terlebih dahulu!", "error");
                 data.status = "Draft";
                 data.timestamp = new Date().toLocaleString('id-ID');
+                data.staffName = "-"; // Cegah error kosong di backend
                 
                 let existingIndex = logsData.findIndex(log => log.id === data.id);
                 if(existingIndex >= 0) { logsData[existingIndex] = data; } 
                 else { logsData.push(data); }
                 
                 localStorage.setItem('storemanLogs', JSON.stringify(logsData));
-                showToast("Draft berhasil diamankan di penyimpanan lokal.", "success");
+                showToast("Menyimpan draft dan Sinkronisasi ke Server...", "info");
                 switchTab('log');
+                
+                // Kirim Draft ke Google Sheets agar aman saat Logout
+                await sendToGoogleSheets(data);
+                await syncDataFromServer();
+                showToast("Draft berhasil diamankan di Cloud!", "success");
             } catch(e) { if(e.message !== "loading") console.error(e); }
         }
 
@@ -1029,7 +1049,9 @@
             const statusFilter = document.getElementById('log-filter-status')?.value || "all";
 
             const isStaff = currentUser?.role.toUpperCase().includes('STAFF');
-            let visibleLogs = isStaff ? logsData : logsData.filter(log => log.name === currentUser?.name);
+            
+            // PERUBAHAN: Semua user kini dapat melihat seluruh rekam jejak aktivitas (tanpa filter pembatasan nama)
+            let visibleLogs = logsData;
 
             visibleLogs = visibleLogs.filter(log => {
                 const matchSearch = log.name.toLowerCase().includes(searchText) || log.roleText.toLowerCase().includes(searchText);
@@ -1047,7 +1069,9 @@
                 let statusLabel = log.status === 'Submitted' ? 'Pending Approved' : log.status;
                 
                 let actBtn = `<button onclick="previewFromLog('${log.id}')" class="text-blue-400 hover:text-blue-300 mr-4 transition" title="Lihat Raport"><i class="fas fa-eye fa-lg"></i></button>`;
-                if(log.status === 'Draft' && !isStaff) {
+                
+                // PERUBAHAN: Pastikan tombol Lanjutkan Draft HANYA muncul untuk pemilik dokumen tersebut
+                if(log.status === 'Draft' && log.name === currentUser?.name) {
                     actBtn += `<button onclick="continueDraft('${log.id}')" class="text-amber-400 hover:text-amber-300 font-bold text-xs bg-amber-500/10 px-2 py-1 rounded border border-amber-500/30"><i class="fas fa-play mr-1"></i> Lanjutkan</button>`;
                 }
 
@@ -1072,7 +1096,16 @@
             document.getElementById('form-id').value = data.id;
             document.getElementById('date').value = data.date;
             document.getElementById('shift').value = data.shift;
-            document.getElementById('role').value = data.role;
+            
+            // Cari key role (value) berdasarkan roleText karena dari Server hanya menyimpan Text-nya
+            let roleVal = data.role;
+            if (!roleVal) {
+                const roleSelect = document.getElementById('role');
+                Array.from(roleSelect.options).forEach(opt => {
+                    if (opt.text === data.roleText) roleVal = opt.value;
+                });
+            }
+            document.getElementById('role').value = roleVal;
             
             document.getElementById('safety-actual').value = data.safetyRaw || "";
             document.getElementById('improve-actual').value = data.improveRaw || "";
@@ -1082,14 +1115,19 @@
             currentJobs = [];
             
             data.jobs.forEach((job, index) => {
-                const isCustom = !jobsByRole[data.role].includes(job.desc);
+                let isCustom = true;
+                if (roleVal && jobsByRole[roleVal]) {
+                    isCustom = !jobsByRole[roleVal].includes(job.desc);
+                }
+                
                 addJobRow(index, job.desc, isCustom);
                 
                 setTimeout(() => {
                     if(isCustom) document.getElementById(`job-desc-${index}`).value = job.desc;
                     document.getElementById(`job-actual-${index}`).value = job.actual;
                     document.getElementById(`job-remarks-${index}`).value = job.remarks;
-                    if(job.photo) {
+                    
+                    if(job.photo && job.photo !== "-") {
                         document.getElementById(`job-photo-data-${index}`).value = job.photo;
                         document.getElementById(`job-photo-preview-${index}`).innerHTML = `<a href="${job.photo}" target="_blank" class="text-emerald-400 text-xs hover:underline"><i class="fas fa-check-circle"></i> File Sukses</a>`;
                     }
@@ -1220,6 +1258,7 @@
             let sumScore = 0;
             let gradeCounts = {};
             let userStats = {};
+            let roleStats = {};
 
             filteredLogs.forEach(log => {
                 sumScore += log.stats.totalScore;
@@ -1231,6 +1270,11 @@
                 }
                 userStats[log.name].totalScore += log.stats.totalScore;
                 userStats[log.name].count += 1;
+
+                let rText = log.roleText || "Lainnya";
+                // Persingkat nama agar muat di grafik
+                rText = rText.replace(/[0-9.]/g, '').replace('STOREMAN ', '').trim();
+                roleStats[rText] = (roleStats[rText] || 0) + 1;
             });
 
             const totalSubmit = filteredLogs.length;
@@ -1265,14 +1309,72 @@
                     let medal = i === 0 ? '<i class="fas fa-medal text-amber-400 text-xl"></i> 1' : i === 1 ? '<i class="fas fa-medal text-slate-300 text-xl"></i> 2' : i === 2 ? '<i class="fas fa-medal text-orange-700 text-xl"></i> 3' : (i+1);
                     lbBody.innerHTML += `
                         <tr class="hover:bg-slate-700/50 transition-colors">
-                            <td class="px-5 py-4 font-bold text-slate-300">${medal}</td>
-                            <td class="px-5 py-4 font-bold text-white tracking-wide">${u.name}</td>
-                            <td class="px-5 py-4 text-slate-300 text-center"><span class="bg-slate-700 px-3 py-1 rounded font-medium">${u.count} Doc</span></td>
-                            <td class="px-5 py-4 font-extrabold text-amber-400 text-center text-lg">${u.avg.toFixed(2)}%</td>
+                            <td class="px-4 py-3 font-bold text-slate-300">${medal}</td>
+                            <td class="px-4 py-3 font-bold text-white tracking-wide">${u.name}</td>
+                            <td class="px-4 py-3 text-slate-300 text-center"><span class="bg-slate-700 px-2.5 py-1 rounded font-medium text-xs">${u.count} Doc</span></td>
+                            <td class="px-4 py-3 font-extrabold text-amber-400 text-center">${u.avg.toFixed(2)}%</td>
                         </tr>
                     `;
                 });
             }
+
+            renderRoleChart(roleStats);
+        }
+
+        let roleChartInstance = null;
+        function renderRoleChart(roleStats) {
+            const ctx = document.getElementById('roleChart');
+            if(!ctx) return;
+            
+            if(roleChartInstance) {
+                roleChartInstance.destroy();
+            }
+
+            const labels = Object.keys(roleStats);
+            const data = Object.values(roleStats);
+            
+            if(labels.length === 0) return;
+
+            roleChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Dokumen',
+                        data: data,
+                        backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                        borderColor: '#60a5fa',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { color: '#94a3b8', stepSize: 1 }, 
+                            grid: { color: 'rgba(51, 65, 85, 0.4)' } 
+                        },
+                        x: { 
+                            ticks: { color: '#cbd5e1', font: {size: 10, family: "'Inter', sans-serif"} }, 
+                            grid: { display: false } 
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { 
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                            titleColor: '#f8fafc', 
+                            bodyColor: '#f8fafc', 
+                            padding: 12,
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
         }
 
         function renderApprovalTable() {
@@ -1405,8 +1507,8 @@
             if(!currentUser) return;
             const mFilter = document.getElementById('pr-filter-month').value;
             
-            // Filter logs milik user yang login dan status approved/submitted (atau semua history miliknya)
-            let userLogs = logsData.filter(log => log.name === currentUser.name);
+            // Filter logs milik user yang login dan status BUKAN Draft (agar raport nilai akurat)
+            let userLogs = logsData.filter(log => log.name === currentUser.name && log.status !== 'Draft');
 
             if(mFilter !== 'all') {
                 userLogs = userLogs.filter(log => {
