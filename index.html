@@ -656,7 +656,7 @@
                 const response = await fetch(WEB_APP_URL_SHEETS, {
                     redirect: "follow",
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({ action: "getData" })
                 });
                 if(!response.ok) throw new Error("HTTP error " + response.status);
@@ -670,6 +670,7 @@
                 }
             } catch (error) {
                 console.error("Sync Error:", error);
+                showToast("Sync Error: " + error.message, "error");
             }
         }
 
@@ -687,7 +688,7 @@
                 const response = await fetch(WEB_APP_URL_SHEETS, {
                     redirect: "follow", 
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({ action: "login", nik: nikInput })
                 });
 
@@ -706,7 +707,7 @@
                 }
             } catch (error) {
                 console.error("Login Error:", error);
-                showToast("Kesalahan Jaringan. Pastikan internet stabil.", "error");
+                showToast("Server Error: " + error.message + " (Cek Deploy Script!)", "error");
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i> MASUK SISTEM';
@@ -894,7 +895,7 @@
                 const response = await fetch(WEB_APP_URL_DRIVE, {
                     redirect: "follow",
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({ base64: base64Str, fileName: fileName, mimeType: mimeType })
                 });
 
@@ -913,7 +914,7 @@
                 console.error("Upload Error:", error);
                 dataInput.value = "";
                 previewDiv.innerHTML = `<span class="text-red-400"><i class="fas fa-wifi"></i> Error Jaringan</span>`;
-                showToast("Error jaringan saat upload gambar.", "error");
+                showToast("Drive Error: " + error.message, "error");
             }
         }
 
@@ -1063,7 +1064,7 @@
                 const response = await fetch(WEB_APP_URL_SHEETS, {
                     redirect: "follow",
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(data)
                 });
                 if(!response.ok) throw new Error("HTTP error");
@@ -1076,7 +1077,7 @@
                 }
             } catch (error) {
                 console.error("Sheets Error:", error);
-                showToast("Data tersimpan lokal, tapi gagal ke Server. Cek internet Anda.", "error");
+                showToast("Sheet Error: " + error.message + " (Cek Deploy Script!)", "error");
             }
         }
 
@@ -1724,7 +1725,7 @@
                 try {
                     const response = await fetch(WEB_APP_URL_SHEETS, {
                         method: "POST",
-                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        headers: { "Content-Type": "text/plain" },
                         body: JSON.stringify({ action: "delete", id: currentDeleteId }),
                         redirect: "follow"
                     });
@@ -1747,7 +1748,7 @@
                     }
                 } catch (error) {
                     console.error(error);
-                    showToast("Terjadi kesalahan jaringan saat menghapus.", "error");
+                    showToast("Delete Error: " + error.message, "error");
                     closeDeleteModal();
                 } finally {
                     btn.innerHTML = originalText;
