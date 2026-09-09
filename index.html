@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -109,11 +110,11 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
-                    <div class="text-right hidden md:block">
-                        <div id="user-display-name" class="font-bold text-amber-400">Nama User</div>
+                    <div class="text-right cursor-pointer hover:opacity-80 transition" onclick="openPersonalReport()" title="Klik untuk lihat Raport Personal">
+                        <div id="user-display-name" class="font-bold text-amber-400 hover:underline">Nama User</div>
                         <div id="user-display-role" class="text-xs text-slate-400 font-medium tracking-wide">Jabatan • NIK</div>
                     </div>
-                    <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 border border-slate-500 flex items-center justify-center text-amber-400 font-bold shadow-lg">
+                    <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 border border-slate-500 flex items-center justify-center text-amber-400 font-bold shadow-lg cursor-pointer" onclick="openPersonalReport()" title="Klik untuk lihat Raport Personal">
                         <i class="fas fa-user-shield"></i>
                     </div>
                     <button onclick="logout()" class="ml-2 text-slate-400 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-slate-800" title="Logout">
@@ -180,6 +181,17 @@
                         </div>
                     </div>
 
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-slate-800/60 p-5 rounded-xl border border-slate-700/50 shadow-inner">
+                            <h3 class="text-sm font-bold text-amber-400 mb-3 uppercase tracking-wide"><i class="fas fa-chart-area mr-2"></i>Tren Rata-Rata Score Harian</h3>
+                            <div class="h-64 relative"><canvas id="trendChart"></canvas></div>
+                        </div>
+                        <div class="bg-slate-800/60 p-5 rounded-xl border border-slate-700/50 shadow-inner">
+                            <h3 class="text-sm font-bold text-emerald-400 mb-3 uppercase tracking-wide"><i class="fas fa-shield-alt mr-2"></i>Komponen HSE & Improvement Harian</h3>
+                            <div class="h-64 relative"><canvas id="hseChart"></canvas></div>
+                        </div>
+                    </div>
+
                     <h3 class="text-lg font-bold text-amber-400 mb-4 border-b border-slate-700/50 pb-2 uppercase tracking-wide">Papan Peringkat (Leaderboard Seluruh Storeman)</h3>
                     <div class="overflow-x-auto rounded-lg border border-slate-700/50">
                         <table class="min-w-full text-sm text-left">
@@ -198,6 +210,31 @@
             </div>
 
             <div id="tab-input" class="hidden space-y-6">
+                <!-- Indikator Penilaian Panel -->
+                <div class="glass-card rounded-xl p-5 border-l-4 border-l-amber-500 bg-slate-900/60">
+                    <h3 class="font-bold text-amber-400 text-base mb-3 uppercase tracking-wide flex items-center"><i class="fas fa-info-circle mr-2 text-xl"></i> Panduan & Indikator Penilaian Kinerja</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-300">
+                        <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
+                            <p class="font-bold text-white mb-1.5 uppercase">Bobot Komponen Penilaian:</p>
+                            <ul class="space-y-1 pl-2">
+                                <li>• <span class="font-bold text-amber-400">80%</span> : Key In Workload (Aktivitas Utama)</li>
+                                <li>• <span class="font-bold text-emerald-400">10%</span> : Safety Individu (Target 4 Green Card/Bulan)</li>
+                                <li>• <span class="font-bold text-blue-400">10%</span> : Improvement (Target 1 SS/Bulan)</li>
+                            </ul>
+                        </div>
+                        <div class="bg-slate-800/80 p-3.5 rounded-lg border border-slate-700">
+                            <p class="font-bold text-white mb-1.5 uppercase">Kriteria Predikat (Grade):</p>
+                            <div class="grid grid-cols-2 gap-1 font-semibold">
+                                <div><span class="text-blue-400">IS (Istimewa)</span> : &ge; 105%</div>
+                                <div><span class="text-emerald-400">BS (Baik Sekali)</span> : &gt; 100% - &lt; 105%</div>
+                                <div><span class="text-green-300">B (Baik)</span> : 85% - 100%</div>
+                                <div><span class="text-amber-400">C (Cukup)</span> : 70% - &lt; 85%</div>
+                                <div class="col-span-2 text-red-400">K (Kurang) : &le; 70%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="glass-card rounded-xl p-6 border-t-2 border-t-amber-500">
                     <h2 class="text-xl font-bold mb-5 text-white border-b border-slate-700/50 pb-3 uppercase tracking-wide"><i class="fas fa-file-signature text-amber-500 mr-2"></i>Parameter Sesi</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -281,8 +318,8 @@
                 </div>
 
                 <div class="flex flex-wrap gap-4 mt-8">
-                    <button onclick="saveDraft()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3.5 px-8 rounded-xl shadow-lg transition border border-slate-600">
-                        <i class="fas fa-save mr-2"></i> Simpan Draft
+                    <button onclick="saveDraft()" class="bg-red-600 hover:bg-red-500 text-white font-extrabold py-3.5 px-8 rounded-xl shadow-lg shadow-red-900/40 transition border border-red-500 flex items-center">
+                        <i class="fas fa-save mr-2 fa-lg"></i> SIMPAN DRAFT
                     </button>
                     <button onclick="previewData()" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-900 font-extrabold py-3.5 px-8 rounded-xl shadow-lg shadow-amber-500/20 transition flex-1 text-lg">
                         <i class="fas fa-search-plus mr-2"></i> PREVIEW & FINALISASI
@@ -404,6 +441,18 @@
                         </table>
                     </div>
 
+                    <!-- Indikator Legend & Skor Legend di Preview -->
+                    <div class="mb-6 p-4 rounded-xl bg-slate-900/60 border border-slate-700 text-xs relative z-10">
+                        <p class="font-bold text-amber-400 mb-2 uppercase tracking-wide"><i class="fas fa-info-circle mr-1"></i> Parameter Kriteria Predikat:</p>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-center font-semibold">
+                            <div class="bg-slate-800 p-2 rounded"><span class="text-blue-400 block font-bold text-sm">IS</span> &ge; 105%</div>
+                            <div class="bg-slate-800 p-2 rounded"><span class="text-emerald-400 block font-bold text-sm">BS</span> 100-105%</div>
+                            <div class="bg-slate-800 p-2 rounded"><span class="text-green-300 block font-bold text-sm">B</span> 85-100%</div>
+                            <div class="bg-slate-800 p-2 rounded"><span class="text-amber-400 block font-bold text-sm">C</span> 70-85%</div>
+                            <div class="bg-slate-800 p-2 rounded col-span-2 md:col-span-1"><span class="text-red-400 block font-bold text-sm">K</span> &le; 70%</div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch relative z-10">
                         <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-700/50 shadow-inner flex flex-col justify-center">
                             <h3 class="font-bold text-sm mb-4 border-b border-slate-700 pb-2 text-amber-400 uppercase"><i class="fas fa-chart-bar text-emerald-400 mr-2"></i>Komponen Penilaian</h3>
@@ -482,8 +531,79 @@
         </div>
     </div>
 
+    <div id="modal-personal-report" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl relative border border-slate-600 flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-slate-700 flex justify-between items-center bg-slate-900 rounded-t-2xl z-10 shrink-0">
+                <div>
+                    <h2 class="text-xl font-extrabold text-amber-500 uppercase tracking-wide"><i class="fas fa-id-card mr-2"></i> Raport Personal Storeman</h2>
+                    <p id="pers-subtitle" class="text-xs text-slate-400 mt-0.5">Rekapitulasi pencapaian kerja bulanan</p>
+                </div>
+                <button onclick="closePersonalReport()" class="text-slate-400 hover:text-white bg-slate-800 hover:bg-red-500 rounded-full w-8 h-8 flex items-center justify-center transition shadow">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto grow space-y-6">
+                <div class="flex justify-between items-center bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+                    <div>
+                        <div id="pers-name" class="text-lg font-bold text-white">-</div>
+                        <div id="pers-role" class="text-xs text-amber-400 font-semibold">-</div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Pilih Bulan Rekap</label>
+                        <select id="pers-filter-month" class="input-dark px-3 py-1.5 text-sm font-bold" onchange="renderPersonalReport()">
+                            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+                            <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+                            <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+                            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 text-center">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Dokumen</div>
+                        <div id="pers-total-docs" class="text-2xl font-black text-white">0</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 text-center">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Rata-rata Score</div>
+                        <div id="pers-avg-score" class="text-2xl font-black text-amber-400">0%</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 text-center">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Safety Aktual / Target</div>
+                        <div id="pers-safety-sum" class="text-2xl font-black text-emerald-400">0 / 4</div>
+                    </div>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 text-center">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Improve Aktual / Target</div>
+                        <div id="pers-improve-sum" class="text-2xl font-black text-blue-400">0 / 1</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/80 p-5 rounded-xl border border-slate-700 text-center">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Predikat / Grade Bulanan</p>
+                    <div id="pers-grade-badge" class="inline-block px-6 py-2 rounded-full font-extrabold text-base tracking-wide uppercase mt-1 mb-2">GRADE -</div>
+                    <div id="pers-grade-desc" class="text-xs text-slate-300 font-medium">-</div>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-900 border-t border-slate-700 flex justify-end rounded-b-2xl">
+                <button onclick="closePersonalReport()" class="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2 rounded-xl text-sm font-bold transition">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+        <div class="bg-slate-800 rounded-xl max-w-sm w-full p-6 text-center border border-slate-700 shadow-2xl">
+            <i class="fas fa-trash-alt text-red-500 text-4xl mb-3"></i>
+            <h3 class="text-lg font-bold text-white mb-2">Hapus Data Permanen?</h3>
+            <p class="text-slate-400 mb-6 text-xs">Tindakan ini akan menghapus data dari aplikasi dan database Spreadsheet.</p>
+            <div class="flex space-x-3">
+                <button onclick="closeDeleteModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2.5 rounded-lg transition font-medium text-sm">Batal</button>
+                <button id="confirmDeleteBtn" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg shadow-lg transition font-bold text-sm">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const WEB_APP_URL_SHEETS = "https://script.google.com/macros/s/AKfycbwCXN84KVG9F4rrDU7XLJvwTSSZo60TObq_3ECEqKTx_13hDtzuLNLwOfMefRLecNbM/exec";
+        const WEB_APP_URL_SHEETS = "https://script.google.com/macros/s/AKfycbxyF5_qbbBz7TKDMWYp0fyqQEJqIg-v0UQrFMxRQrFYZO8pJJRKFSIEadw2S07OwK5x/exec";
         const WEB_APP_URL_DRIVE = "https://script.google.com/macros/s/AKfycbxUWMVOXxnXyEjQsHFZbxk1745-FP2ooJyfxUHjNe1xp7bk9hCqhQnmAZe_UoxGCh65/exec";
 
         const jobsByRole = {
@@ -510,6 +630,8 @@
         let currentJobs = [];
         let logsData = JSON.parse(localStorage.getItem('storemanLogs')) || [];
         let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let trendChartInstance = null;
+        let hseChartInstance = null;
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
@@ -665,7 +787,9 @@
             }
 
             if(tabId === 'log') renderLog();
-            if(tabId === 'dashboard') renderDashboard();
+            if(tabId === 'dashboard') {
+                renderDashboard();
+            }
             if(tabId === 'approval') renderApprovalTable();
         }
 
@@ -964,9 +1088,18 @@
                 let badgeColor = log.status === 'Draft' ? 'bg-amber-600' : log.status === 'Submitted' ? 'bg-blue-600' : log.status === 'Approved' ? 'bg-emerald-600' : 'bg-red-600';
                 let statusLabel = log.status === 'Submitted' ? 'Pending Approved' : log.status;
                 
+                let statsObj = log.stats || { totalScore: 0, gradeInfo: { grade: '-', color: 'bg-slate-700 text-white' } };
+                let scoreVal = statsObj.totalScore !== undefined ? statsObj.totalScore : 0;
+                let gradeObj = statsObj.gradeInfo || { grade: '-', color: 'bg-slate-700 text-white' };
+
                 let actBtn = `<button onclick="previewFromLog('${log.id}')" class="text-blue-400 hover:text-blue-300 mr-4 transition" title="Lihat Raport"><i class="fas fa-eye fa-lg"></i></button>`;
                 if(log.status === 'Draft' && !isStaff) {
                     actBtn += `<button onclick="continueDraft('${log.id}')" class="text-amber-400 hover:text-amber-300 font-bold text-xs bg-amber-500/10 px-2 py-1 rounded border border-amber-500/30"><i class="fas fa-play mr-1"></i> Lanjutkan</button>`;
+                }
+                
+                let deleteBtn = '';
+                if(isStaff) {
+                    deleteBtn = `<button onclick="promptDeleteLog('${log.id}')" class="text-red-400 hover:text-red-300 ml-3 transition" title="Hapus Permanen"><i class="fas fa-trash-alt fa-lg"></i></button>`;
                 }
 
                 tbody.innerHTML += `
@@ -974,13 +1107,59 @@
                         <td class="px-5 py-4"><div class="font-bold text-white tracking-wide">${log.date}</div><div class="text-xs text-slate-400 mt-1">Shift ${log.shift}</div></td>
                         <td class="px-5 py-4 text-slate-300 font-medium">${log.name}</td>
                         <td class="px-5 py-4"><div class="text-sm text-slate-300 font-medium">${log.roleText}</div></td>
-                        <td class="px-5 py-4 text-center font-extrabold text-white text-lg">${log.stats.totalScore.toFixed(2)}%</td>
-                        <td class="px-5 py-4 text-center"><span class="${log.stats.gradeInfo.color} px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg uppercase">${log.stats.gradeInfo.grade}</span></td>
+                        <td class="px-5 py-4 text-center font-extrabold text-white text-lg">${scoreVal.toFixed(2)}%</td>
+                        <td class="px-5 py-4 text-center"><span class="${gradeObj.color} px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg uppercase">${gradeObj.grade}</span></td>
                         <td class="px-5 py-4 text-center"><span class="${badgeColor} text-white px-3 py-1 rounded-md text-xs font-bold shadow tracking-wide uppercase">${statusLabel}</span></td>
-                        <td class="px-5 py-4 text-center">${actBtn}</td>
+                        <td class="px-5 py-4 text-center">${actBtn} ${deleteBtn}</td>
                     </tr>
                 `;
             });
+        }
+
+        let currentDeleteId = null;
+        function promptDeleteLog(id) {
+            currentDeleteId = id;
+            document.getElementById('deleteConfirmModal').classList.remove('hidden');
+            
+            document.getElementById('confirmDeleteBtn').onclick = async function() {
+                const btn = this;
+                const origText = btn.innerText;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(WEB_APP_URL_SHEETS, {
+                        redirect: "follow",
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: "delete", id: currentDeleteId })
+                    });
+                    const res = await response.json();
+                    if(res.status === 'success') {
+                        logsData = logsData.filter(l => l.id !== currentDeleteId);
+                        localStorage.setItem('storemanLogs', JSON.stringify(logsData));
+                        renderLog();
+                        renderDashboard();
+                        renderApprovalTable();
+                        showToast("Data berhasil dihapus permanen.", "success");
+                        closeDeleteModal();
+                    } else {
+                        showToast("Gagal hapus: " + res.message, "error");
+                        closeDeleteModal();
+                    }
+                } catch(err) {
+                    showToast("Error jaringan saat menghapus.", "error");
+                    closeDeleteModal();
+                } finally {
+                    btn.innerText = origText;
+                    btn.disabled = false;
+                }
+            };
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteConfirmModal').classList.add('hidden');
+            currentDeleteId = null;
         }
 
         function continueDraft(id) {
@@ -1050,16 +1229,18 @@
                     </tr>`;
             });
 
-            document.getElementById('prev-wl-achv').innerText = data.stats.avgWorkloadAchv.toFixed(2) + "%";
-            document.getElementById('prev-sf-achv').innerText = data.stats.safetyAchv.toFixed(2) + "%";
-            document.getElementById('prev-im-achv').innerText = data.stats.improveAchv.toFixed(2) + "%";
-            
-            document.getElementById('prev-total-score').innerText = data.stats.totalScore.toFixed(2) + "%";
+            let stats = data.stats || { avgWorkloadAchv: 0, safetyAchv: 0, improveAchv: 0, totalScore: 0, gradeInfo: { grade: '-', color: 'bg-slate-700 text-white', desc: '-' } };
+
+            document.getElementById('prev-wl-achv').innerText = (stats.avgWorkloadAchv || 0).toFixed(2) + "%";
+            document.getElementById('prev-sf-achv').innerText = (stats.safetyAchv || 0).toFixed(2) + "%";
+            document.getElementById('prev-im-achv').innerText = (stats.improveAchv || 0).toFixed(2) + "%";
+            document.getElementById('prev-total-score').innerText = (stats.totalScore || 0).toFixed(2) + "%";
             
             const badge = document.getElementById('prev-grade-badge');
-            badge.innerText = "GRADE " + data.stats.gradeInfo.grade;
-            badge.className = `px-8 py-2.5 rounded-full font-extrabold text-lg shadow-2xl tracking-wide uppercase ${data.stats.gradeInfo.color}`;
-            document.getElementById('prev-grade-desc').innerText = data.stats.gradeInfo.desc;
+            let gInfo = stats.gradeInfo || { grade: '-', color: 'bg-slate-700 text-white', desc: '-' };
+            badge.innerText = "GRADE " + gInfo.grade;
+            badge.className = `px-8 py-2.5 rounded-full font-extrabold text-lg shadow-2xl tracking-wide uppercase ${gInfo.color}`;
+            document.getElementById('prev-grade-desc').innerText = gInfo.desc;
 
             document.getElementById('btn-submit-final').style.display = showSubmit ? 'flex' : 'none';
             document.getElementById('modal-preview').classList.remove('hidden');
@@ -1139,14 +1320,15 @@
             let userStats = {};
 
             filteredLogs.forEach(log => {
-                sumScore += log.stats.totalScore;
-                let grade = log.stats.gradeInfo.grade;
+                let st = log.stats || { totalScore: 0, gradeInfo: { grade: '-' } };
+                sumScore += (st.totalScore || 0);
+                let grade = (st.gradeInfo && st.gradeInfo.grade) ? st.gradeInfo.grade : '-';
                 gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
 
                 if(!userStats[log.name]) {
                     userStats[log.name] = { totalScore: 0, count: 0 };
                 }
-                userStats[log.name].totalScore += log.stats.totalScore;
+                userStats[log.name].totalScore += (st.totalScore || 0);
                 userStats[log.name].count += 1;
             });
 
@@ -1190,6 +1372,130 @@
                     `;
                 });
             }
+
+            renderCharts(filteredLogs);
+        }
+
+        function renderCharts(logs) {
+            let sortedLogs = [...logs].sort((a,b) => new Date(a.date) - new Date(b.date));
+            let dates = [...new Set(sortedLogs.map(l => l.date))];
+            
+            let dailyScores = dates.map(d => {
+                let dayLogs = sortedLogs.filter(l => l.date === d);
+                let sum = dayLogs.reduce((acc, curr) => acc + (curr.stats?.totalScore || 0), 0);
+                return dayLogs.length > 0 ? (sum / dayLogs.length) : 0;
+            });
+
+            let dailySafety = dates.map(d => {
+                let dayLogs = sortedLogs.filter(l => l.date === d);
+                let sum = dayLogs.reduce((acc, curr) => acc + (curr.safetyRaw || 0), 0);
+                return dayLogs.length > 0 ? (sum / dayLogs.length) : 0;
+            });
+
+            let dailyImprove = dates.map(d => {
+                let dayLogs = sortedLogs.filter(l => l.date === d);
+                let sum = dayLogs.reduce((acc, curr) => acc + (curr.improveRaw || 0), 0);
+                return dayLogs.length > 0 ? (sum / dayLogs.length) : 0;
+            });
+
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            if(trendChartInstance) trendChartInstance.destroy();
+            trendChartInstance = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: dates.length > 0 ? dates : ['-'],
+                    datasets: [{
+                        label: 'Rata-rata Score (%)',
+                        data: dailyScores.length > 0 ? dailyScores : [0],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            const ctxHse = document.getElementById('hseChart').getContext('2d');
+            if(hseChartInstance) hseChartInstance.destroy();
+            hseChartInstance = new Chart(ctxHse, {
+                type: 'bar',
+                data: {
+                    labels: dates.length > 0 ? dates : ['-'],
+                    datasets: [
+                        { label: 'Safety (Aktual)', data: dailySafety.length > 0 ? dailySafety : [0], backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'Improvement (Aktual)', data: dailyImprove.length > 0 ? dailyImprove : [0], backgroundColor: '#3b82f6', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#cbd5e1', font: { size: 10 } } } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        function openPersonalReport() {
+            if(!currentUser) return;
+            const currentMonth = new Date().getMonth() + 1;
+            document.getElementById('pers-filter-month').value = currentMonth;
+            document.getElementById('pers-name').innerText = currentUser.name;
+            document.getElementById('pers-role').innerText = `${currentUser.role} • NIK: ${currentUser.nik}`;
+            renderPersonalReport();
+            document.getElementById('modal-personal-report').classList.remove('hidden');
+        }
+
+        function closePersonalReport() {
+            document.getElementById('modal-personal-report').classList.add('hidden');
+        }
+
+        function renderPersonalReport() {
+            if(!currentUser) return;
+            const monthVal = parseInt(document.getElementById('pers-filter-month').value);
+            
+            let userLogs = logsData.filter(log => log.name === currentUser.name && (log.status === 'Approved' || log.status === 'Submitted'));
+            
+            userLogs = userLogs.filter(log => {
+                let mw = getMonthWeek(log.date);
+                return mw.month === monthVal;
+            });
+
+            let totalDocs = userLogs.length;
+            let sumScore = 0;
+            let sumSafety = 0;
+            let sumImprove = 0;
+
+            userLogs.forEach(l => {
+                sumScore += (l.stats?.totalScore || 0);
+                sumSafety += (l.safetyRaw || 0);
+                sumImprove += (l.improveRaw || 0);
+            });
+
+            let avgScore = totalDocs > 0 ? (sumScore / totalDocs) : 0;
+            let gradeObj = getGrade(avgScore);
+
+            document.getElementById('pers-total-docs').innerText = totalDocs;
+            document.getElementById('pers-avg-score').innerText = avgScore.toFixed(2) + "%";
+            document.getElementById('pers-safety-sum').innerText = `${sumSafety} / ${totalDocs * 4}`;
+            document.getElementById('pers-improve-sum').innerText = `${sumImprove} / ${totalDocs * 1}`;
+
+            const badge = document.getElementById('pers-grade-badge');
+            badge.innerText = "GRADE " + gradeObj.grade;
+            badge.className = `inline-block px-6 py-2 rounded-full font-extrabold text-base tracking-wide uppercase mt-1 mb-2 ${gradeObj.color}`;
+            document.getElementById('pers-grade-desc').innerText = gradeObj.desc;
         }
 
         function renderApprovalTable() {
@@ -1205,12 +1511,13 @@
             }
 
             pendingLogs.forEach((log) => {
+                let st = log.stats || { totalScore: 0 };
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-700/50 transition-colors">
                         <td class="px-5 py-4"><div class="font-bold text-white">${log.date}</div><div class="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">${log.timestamp}</div></td>
                         <td class="px-5 py-4 font-bold text-amber-400">${log.name}</td>
                         <td class="px-5 py-4 text-sm text-slate-300 font-medium">${log.roleText}</td>
-                        <td class="px-5 py-4 text-center font-extrabold text-white text-lg">${log.stats.totalScore.toFixed(2)}%</td>
+                        <td class="px-5 py-4 text-center font-extrabold text-white text-lg">${(st.totalScore || 0).toFixed(2)}%</td>
                         <td class="px-5 py-4 text-center"><span class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-xs font-bold uppercase shadow-sm">Pending</span></td>
                         <td class="px-5 py-4 text-center">
                             <button onclick="openReviewModal('${log.id}')" class="bg-pink-600 hover:bg-pink-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow border border-pink-500"><i class="fas fa-edit mr-1"></i> Review</button>
@@ -1224,11 +1531,12 @@
             const index = logsData.findIndex(l => l.id === id);
             if(index < 0) return;
             const data = logsData[index];
+            let st = data.stats || { totalScore: 0 };
 
             document.getElementById('rev-log-index').value = index;
             document.getElementById('rev-name').innerText = data.name;
             document.getElementById('rev-role').innerText = data.roleText;
-            document.getElementById('rev-score').innerText = data.stats.totalScore.toFixed(2) + "%";
+            document.getElementById('rev-score').innerText = (st.totalScore || 0).toFixed(2) + "%";
             document.getElementById('rev-staff-name').value = currentUser.name;
 
             const tbody = document.getElementById('rev-jobs-tbody');
