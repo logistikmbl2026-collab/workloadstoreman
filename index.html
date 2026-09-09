@@ -839,7 +839,7 @@
                     <input type="hidden" id="job-photo-data-${index}">
                 </td>
                 <td class="px-3 py-4 align-top text-center">
-                    ${isCustom ? `<button onclick="this.closest('tr').remove()" class="text-red-400 hover:text-red-300 p-2"><i class="fas fa-trash"></i></button>` : ''}
+                    <button onclick="this.closest('tr').remove()" class="text-red-400 hover:text-red-300 p-2 transition" title="Hapus aktivitas ini dari perhitungan"><i class="fas fa-trash fa-lg"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -1475,13 +1475,13 @@
 
             let totalDocs = userLogs.length;
             let sumScore = 0;
-            let sumSafety = 0;
-            let sumImprove = 0;
+            let maxSafety = 0;
+            let maxImprove = 0;
 
             userLogs.forEach(l => {
                 sumScore += (l.stats?.totalScore || 0);
-                sumSafety += (l.safetyRaw || 0);
-                sumImprove += (l.improveRaw || 0);
+                if ((l.safetyRaw || 0) > maxSafety) maxSafety = l.safetyRaw;
+                if ((l.improveRaw || 0) > maxImprove) maxImprove = l.improveRaw;
             });
 
             let avgScore = totalDocs > 0 ? (sumScore / totalDocs) : 0;
@@ -1489,8 +1489,8 @@
 
             document.getElementById('pers-total-docs').innerText = totalDocs;
             document.getElementById('pers-avg-score').innerText = avgScore.toFixed(2) + "%";
-            document.getElementById('pers-safety-sum').innerText = `${sumSafety} / ${totalDocs * 4}`;
-            document.getElementById('pers-improve-sum').innerText = `${sumImprove} / ${totalDocs * 1}`;
+            document.getElementById('pers-safety-sum').innerText = `${maxSafety} / 4`;
+            document.getElementById('pers-improve-sum').innerText = `${maxImprove} / 1`;
 
             const badge = document.getElementById('pers-grade-badge');
             badge.innerText = "GRADE " + gradeObj.grade;
